@@ -1,0 +1,1 @@
+.creator-main{margin-top:-2px;font-size:12px;letter-spacing:.4px;color:#98a4c3;font-weight:700}.sidebar:not(:has(.nav[data-view="home"].active))~main .creator-main{display:none}@media(max-width:570px){.creator-main{font-size:11px;margin-top:0}}
