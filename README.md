@@ -1,376 +1,342 @@
 # ◆ NEON VAULT — Virtual Casino
 
-**NEON VAULT** is a polished browser-based virtual casino built with vanilla **HTML, CSS, and JavaScript**. The project was designed to be more than a basic game demo: it combines several independent game systems with a shared wallet, persistent local progress, rolling profit/loss analytics, an activity ledger, responsive UI design, and secure browser-based random number generation.
+**Created by Daniel O'Keefe**
 
-> **Virtual credits only.** This project does not support real-money gambling, deposits, purchases, withdrawals, or cash-outs. Credits have no monetary value.
+NEON VAULT is a browser-based virtual casino built with **HTML, CSS, and vanilla JavaScript**. It combines several casino-style games with one shared virtual wallet, local save data, rolling profit/loss analytics, an activity ledger, Blackjack side bets, and a skill-based trivia recovery system.
 
-## Project goals
+> **Virtual credits only.** NEON VAULT does not support real-money gambling, deposits, purchases, withdrawals, or cash-outs. Credits have no monetary value.
 
-The initial goal was to create a game that could live entirely on GitHub and run directly in a browser while still having enough structure to demonstrate real software-design decisions. The main requirements were:
+## Main goals
+
+The project was designed to be more than a small one-game demo. The main goals are to:
 
 1. Start every new player with **$1,000 in virtual credits**.
-2. Provide a visual **main menu/dashboard** where the player can choose a game.
-3. Include multiple playable games rather than one trivial mini-game.
-4. Use one shared wallet across all games.
-5. Save the player's balance and history locally so progress survives page reloads.
-6. Calculate net profit/loss over the rolling **last 24 hours, 7 days, and 30 days**.
-7. Keep the interface responsive and visually consistent across desktop and mobile devices.
-8. Make the project easy to host using **GitHub Pages** with no build system or backend required.
+2. Provide a polished main menu where players choose between several games.
+3. Use one shared wallet across all games.
+4. Save progress locally in the browser.
+5. Track profit/loss over the rolling **last 24 hours, 7 days, and 30 days**.
+6. Give players a way to rebuild their bankroll if they reach $0.
+7. Keep the project easy to run and host using GitHub Pages.
 
-## Current features
+## Games and features
 
-### Main dashboard
+### Dashboard
 
-The dashboard is the central navigation area for the project. It displays:
+The dashboard displays:
 
-- Current virtual balance
-- Net profit/loss for the last 24 hours
-- Net profit/loss for the last 7 days
-- Net profit/loss for the last 30 days
-- Game-selection cards
-- Navigation to the player's activity ledger
+- Current balance
+- Net profit/loss over the last 24 hours
+- Net profit/loss over the last 7 days
+- Net profit/loss over the last 30 days
+- Cards for all available games
+- Activity history
+- A special Trivia Rescue prompt if the balance reaches $0
 
-The profit windows are **rolling time periods**, not calendar-day resets.
+The profit windows are rolling time periods, not calendar-day resets.
 
-### Blackjack
+## Blackjack
 
-- Standard 52-card deck generated for each hand
-- Fisher-Yates shuffle
-- Hit and stand actions
-- Ace adjustment from 11 to 1 when needed
-- Dealer draws until at least 17
-- Natural blackjack pays 3:2
+Blackjack uses a **six-deck shoe** so the Perfect Pairs side bet can include true same-rank, same-suit pairs.
+
+Main Blackjack rules:
+
+- Dealer stands on 17
+- Aces count as 1 or 11
 - Standard win pays 1:1
-- Push returns the original wager
-- Dealer and player totals are calculated automatically
+- Natural Blackjack pays 3:2
+- Push returns the main wager
+- Hit and Stand controls
 
-Current limitations: splitting, insurance, surrender, and double-down are not implemented yet.
+### Perfect Pairs side bet
 
-### Roulette
+The player may place an optional side bet before the hand begins.
 
-- European-style single-zero wheel (`0-36`)
+| Result | Odds |
+|---|---:|
+| Mixed pair | 6:1 |
+| Colored pair | 12:1 |
+| Perfect pair | 25:1 |
+
+A **mixed pair** has the same rank but opposite card colors. A **colored pair** has the same rank and same color but different suits. A **perfect pair** has the same rank and suit, which is possible because Blackjack uses multiple decks.
+
+### 21+3 side bet
+
+The player's first two cards and the dealer's up-card form a three-card poker hand.
+
+| Hand | Odds |
+|---|---:|
+| Flush | 5:1 |
+| Straight | 10:1 |
+| Three of a kind | 30:1 |
+| Straight flush | 40:1 |
+| Suited three of a kind | 100:1 |
+
+The Blackjack main wager and each side bet are recorded independently in the activity ledger so wallet changes and analytics remain accurate.
+
+## Roulette
+
+- European single-zero wheel (`0-36`)
 - Red or black bets
 - Exact-number bets
 - Red/black pays 1:1
-- Straight-up number bets pay 35:1
+- Straight-up number bet pays 35:1
 
-### Slots
+## Slots
 
-- Three independent reels
-- Six possible symbols per reel
-- Matching-symbol payout logic
-- Higher payouts for special symbols such as `7` and diamond
+- Three reels
+- Six possible symbols
+- Matching-symbol payout system
+- Larger rewards for special symbols
 - Partial reward for two matching symbols
 
-### Dice
+## Dice
 
 - Two six-sided dice
-- Player chooses **Low (2-6)** or **High (8-12)**
-- A total of seven loses
-- Winning predictions pay 1:1
+- Choose **Low (2-6)** or **High (8-12)**
+- A total of 7 loses
+- Correct prediction pays 1:1
 
-### Activity ledger
+## Bet controls
 
-Every completed round records:
+Each casino game now includes quick wager controls:
 
-- Timestamp
-- Game played
-- Amount wagered
-- Payout
-- Net profit/loss
+- **½ BET** — reduces the current wager by half, rounded down to a whole dollar
+- **2× BET** — doubles the current wager without going above the player's available balance or the configured wager limit
 
-The Activity screen displays the player's most recent results and makes the source of the dashboard statistics visible.
+These controls make it faster to adjust bet sizes without retyping the amount.
 
-## Development process
+# Trivia Rescue
 
-### Stage 1 — Define the shared game system
+Trivia Rescue is the bankroll recovery system and can be played even when the player has no credits left.
 
-The project began with the idea of a virtual casino containing several games. Instead of allowing each game to manage its own money independently, the application was designed around a **single shared state object** containing the player's wallet and history.
+The player answers general-knowledge multiple-choice questions and builds an uncashed reward streak.
 
-This means Blackjack, Roulette, Slots, and Dice all interact with the same balance and settlement system.
+### Reward ladder
 
-### Stage 2 — Build the application shell
+| Correct answers in a row | Cash-out value |
+|---:|---:|
+| 1 | $10 |
+| 2 | $20 |
+| 3 | $40 |
+| 4 | $80 |
+| 5 | $160 |
+| 6 | $320 |
+| 7 | $640 |
+| 8 | $1,280 |
+| 9 | $2,560 |
+| 10 | $5,120 |
 
-`index.html` defines the application's permanent shell:
+Rules:
 
-- Sidebar navigation
-- Brand/header area
-- Wallet display
-- Main content region
-- Toast notification area
+- The first correct answer creates a **$10** pot.
+- Every additional correct answer doubles the current pot.
+- The player may **cash out at any time** after getting at least one question correct.
+- A wrong answer resets the uncashed pot to **$0**.
+- A wrong answer starts a fresh 10-question streak attempt.
+- The maximum streak is **10 correct answers**.
+- Reaching 10 automatically cashes out **$5,120** in virtual credits.
+- Trivia winnings are added to the same wallet used by every casino game.
 
-The individual game screens are rendered dynamically by JavaScript into the main content region rather than loading separate HTML pages.
+This gives a player who reaches $0 a skill-based way to recover instead of being permanently stuck.
 
-### Stage 3 — Create the visual design
+## Shared wallet and settlement system
 
-`style.css` provides the entire visual system. The design uses:
-
-- Dark casino-inspired background
-- Neon mint accent color
-- Gradient panels
-- Responsive cards
-- Game-table styling
-- Playing-card styling
-- Slot-reel presentation
-- Mobile breakpoints
-- Profit/loss color states
-
-The layout changes at smaller widths so the project remains usable on tablets and phones.
-
-### Stage 4 — Build shared wallet and betting logic
-
-The wallet is stored internally in **integer cents**, not floating-point dollars.
+The wallet is stored internally in **integer cents** rather than floating-point dollars.
 
 ```js
 const START = 100000; // $1,000.00
 ```
 
-Using cents prevents common floating-point money errors such as `0.1 + 0.2 !== 0.3`.
+Using integer cents avoids normal JavaScript floating-point money problems.
 
-Before a round starts, `stake()` validates that:
-
-- The wager is a whole-dollar amount
-- The wager is at least $1
-- The wager does not exceed the configured maximum
-- The player has enough credits available
-
-The wager is then debited before the outcome is generated.
-
-### Stage 5 — Create a common settlement system
-
-All games settle through the same transaction logic. When a round finishes, the program calculates:
+Casino rounds follow the same basic flow:
 
 ```text
-net = payout - original wager
+Player selects a game
+        ↓
+Player enters or adjusts wager
+        ↓
+Wager is validated
+        ↓
+Credits are debited
+        ↓
+Game generates an outcome
+        ↓
+Payout is calculated
+        ↓
+Transaction is recorded
+        ↓
+Updated state is saved locally
+        ↓
+Dashboard analytics update
 ```
 
-Examples:
+Net result is calculated as:
 
-| Result | Wager | Payout | Net |
-|---|---:|---:|---:|
-| $25 loss | $25 | $0 | -$25 |
-| $25 even-money win | $25 | $50 | +$25 |
-| $25 push | $25 | $25 | $0 |
+```text
+net = payout - wager
+```
 
-This shared settlement model keeps the analytics consistent across every game.
+Trivia cash-outs are recorded as a $0 wager with a positive payout.
 
-### Stage 6 — Add local persistence
+## Local save system
 
-The player state is serialized into browser `localStorage` under:
+Player data is stored in browser `localStorage` using:
 
 ```text
 neon-vault-save-v1
 ```
 
-The save object contains the player's current balance, analytics ledger, and visible game history.
+Saved information includes:
 
-A simplified saved round looks like:
+- Current wallet balance
+- Timestamped analytics ledger
+- Detailed activity history
 
-```js
-{
-  at: 1792000000000,
-  game: "Roulette",
-  bet: 2500,
-  payout: 5000,
-  net: 2500
-}
-```
+This means refreshing or reopening the site normally keeps the player's progress.
 
-When the application reloads, `safeLoad()` attempts to restore the saved state. If the stored data is missing or invalid, the application creates a fresh player state with a $1,000 balance.
+Important limitations:
 
-### Stage 7 — Add rolling profit analytics
+- Clearing browser site data can erase the save.
+- Private/incognito windows may not retain progress.
+- Another device or browser has a separate save.
+- `localStorage` can be edited manually, so this is not intended to be a secure online account system.
 
-Each ledger entry contains a timestamp and net result. The dashboard calculates a time-window total by summing only entries newer than the selected cutoff.
+## Rolling profit analytics
 
-Conceptually:
+Every settled transaction records a timestamp and net result.
+
+The dashboard recalculates:
 
 ```text
-24-hour profit = sum(net results from now - 24 hours through now)
-7-day profit   = sum(net results from now - 7 days through now)
-30-day profit  = sum(net results from now - 30 days through now)
+24-hour profit = sum of net results from the last 24 hours
+7-day profit   = sum of net results from the last 7 days
+30-day profit  = sum of net results from the last 30 days
 ```
 
-Because the original timestamps are retained, the numbers update naturally as old rounds fall outside each rolling window.
+Older transactions automatically fall outside these windows as time passes.
 
-### Stage 8 — Implement secure random outcomes
+## Randomness
 
-Game outcomes use the browser's `crypto.getRandomValues()` API rather than `Math.random()`.
+Casino outcomes use the browser's `crypto.getRandomValues()` API instead of `Math.random()`.
 
-The `rand()` helper also uses **rejection sampling** so reducing a random integer into a smaller range does not introduce modulo bias. Blackjack then uses that random generator in a Fisher-Yates shuffle.
+The random helper uses rejection sampling to avoid modulo bias, and the Blackjack shoe is randomized using Fisher-Yates shuffling.
 
-This does not make NEON VAULT a real gambling platform; it simply provides stronger randomization for an educational game simulation.
+This improves randomness for the simulation but does not make NEON VAULT a real gambling platform.
 
-### Stage 9 — Add responsive navigation and history
-
-The final initial version connected all game screens to a common navigation system and added an Activity page so the player can inspect recent results instead of seeing only an aggregate balance.
-
-## Architecture
-
-The initial version intentionally avoids frameworks so the application architecture is easy to inspect.
+## Project structure
 
 ```text
 Neon-Vault/
-├── index.html     # Permanent application shell and navigation
-├── style.css      # Theme, responsive layout, cards, tables, game visuals
-├── app.js         # State, persistence, analytics, game engines, rendering
+├── index.html     # Main application shell and navigation
+├── style.css      # Theme, layout, cards, tables, responsive styling
+├── app.js         # State, analytics, trivia, and game logic
+├── shoe.js        # Six-deck Blackjack shoe used by Perfect Pairs
 ├── .gitignore     # Local/editor files excluded from Git
 └── README.md      # Project documentation
 ```
 
-### Important JavaScript responsibilities
+## Important JavaScript areas
 
 | Function / area | Responsibility |
 |---|---|
-| `safeLoad()` | Loads and validates saved browser data |
-| `save()` | Persists the current state to localStorage |
-| `stake()` | Validates a wager |
-| `debit()` | Removes the wager from the current wallet |
-| `log()` | Settles a round and records its net result |
-| `profit()` | Calculates rolling profit/loss windows |
-| `render()` | Builds the dashboard, activity view, and game screens |
+| `safeLoad()` | Restores saved browser data |
+| `save()` | Writes state to localStorage |
+| `stake()` | Validates main wagers |
+| `sideStake()` | Validates Blackjack side bets |
+| `debit()` | Removes wagered credits |
+| `log()` | Records payouts and net results |
+| `profit()` | Calculates rolling analytics |
+| `adjustBet()` | Handles half/double wager buttons |
+| `render()` | Builds dashboard and game interfaces |
 | `rand()` | Generates unbiased random integers |
-| `shuffle()` | Randomizes the Blackjack deck |
-| Blackjack functions | Deck, totals, hit/stand, dealer behavior, settlement |
-| Roulette function | Wheel outcome and payout handling |
-| Slots function | Reel outcome and symbol payout handling |
-| Dice function | Dice outcome and high/low settlement |
-
-## State flow
-
-A normal game round follows the same high-level process:
-
-```text
-Player chooses game
-        ↓
-Player enters wager
-        ↓
-stake() validates wager
-        ↓
-debit() removes wager
-        ↓
-Game generates outcome
-        ↓
-Game determines payout
-        ↓
-log() credits payout + records net result
-        ↓
-save() writes updated state to localStorage
-        ↓
-Dashboard analytics reflect the new result
-```
-
-This shared flow keeps wallet behavior separate from most game-specific rules.
-
-## Local save behavior
-
-Progress is stored only in the browser that is running the application.
-
-That means:
-
-- Refreshing the page keeps progress.
-- Closing and reopening the browser normally keeps progress.
-- Clearing site data can erase progress.
-- Private/incognito windows may not retain progress.
-- Opening the game on another computer starts a separate save.
-- `localStorage` can be edited by the player, so it is not a secure server-side account database.
-
-No personal information is required and no game history is sent to a backend server.
+| `shuffle()` | Fisher-Yates randomization |
+| Trivia functions | Question runs, streaks, pot doubling, cash-out |
+| Blackjack functions | Main hand, Perfect Pairs, 21+3, settlement |
+| Roulette function | Wheel and wager settlement |
+| Slots function | Reel outcomes and multipliers |
+| Dice function | High/low outcome settlement |
 
 ## Running locally
 
-There are no npm packages, dependencies, or build steps.
+No packages or build process are required.
 
-### Option 1 — Open the file directly
-
-Open `index.html` in a modern browser.
-
-### Option 2 — Use a local development server
-
-From the project directory:
+You can open `index.html` directly, or run a small local web server:
 
 ```bash
 python -m http.server 8000
 ```
 
-Then open:
+Then visit:
 
 ```text
 http://localhost:8000
 ```
 
-Using a local server is recommended because browser storage behavior is more consistent when the project has a normal origin.
+## GitHub Pages
 
-## GitHub Pages deployment
+The project is designed to run directly from GitHub Pages.
 
-Because NEON VAULT is a static frontend project, it can be hosted directly from GitHub Pages.
-
-1. Open this repository on GitHub.
+1. Open the repository on GitHub.
 2. Go to **Settings → Pages**.
-3. Under **Build and deployment**, choose **Deploy from a branch**.
-4. Select the `main` branch.
-5. Select `/ (root)` as the folder.
-6. Save the configuration.
-7. GitHub will generate a public Pages URL once deployment completes.
+3. Choose **Deploy from a branch**.
+4. Select `main`.
+5. Select `/ (root)`.
+6. Save.
 
-No backend hosting is required for the current version.
+The live site is:
+
+```text
+https://dokeefe414.github.io/Neon-Vault/
+```
 
 ## Testing checklist
 
-Useful manual tests for the current build include:
+Useful tests include:
 
-- Verify a new save begins at exactly $1,000.00.
-- Verify a wager cannot exceed the current balance.
-- Verify a losing wager decreases the wallet correctly.
-- Verify a winning even-money wager increases net balance by the wager amount.
-- Verify a Blackjack push produces a $0 net result.
-- Verify Blackjack aces change from 11 to 1 when necessary.
-- Verify roulette zero is neither red nor black.
-- Verify exact-number roulette wins return 36 times the wager including the original stake.
-- Verify Dice total seven always loses.
-- Verify the page reload preserves the wallet and history.
-- Verify recent results affect the 24-hour, 7-day, and 30-day analytics.
-- Verify the responsive layout works at desktop and mobile widths.
+- New players begin with exactly $1,000.
+- Half and double bet buttons update the wager correctly.
+- Wagers cannot exceed the current balance.
+- Blackjack pushes return the main wager.
+- Aces correctly change from 11 to 1 when needed.
+- Perfect Pairs evaluates mixed, colored, and perfect pairs correctly.
+- 21+3 identifies flushes, straights, trips, straight flushes, and suited trips.
+- Side-bet payouts are added independently from the Blackjack main hand.
+- Roulette zero is neither red nor black.
+- Exact-number roulette returns 36× the wager including the original stake.
+- Dice total 7 loses.
+- Trivia starts at $10 after the first correct answer.
+- Trivia doubles after each consecutive correct answer.
+- Trivia can cash out before 10 questions.
+- A wrong trivia answer wipes the uncashed pot.
+- Ten correct trivia answers produce $5,120.
+- Refreshing the page preserves wallet and history.
+- 24-hour, 7-day, and 30-day analytics update correctly.
 
 ## Future improvements
 
-The project has room to grow substantially. Planned or possible additions include:
+Possible next additions include:
 
-- Blackjack double-down and split support
-- Multi-deck Blackjack shoe
+- Blackjack double-down
+- Blackjack split hands
+- Insurance and surrender
+- More Blackjack side bets
+- Larger trivia question bank and categories
+- Difficulty levels for trivia
 - Animated card dealing
 - Animated roulette wheel
 - Animated slot reels
-- Sound effects with a mute setting
-- Per-game win rate and profit statistics
+- Sound effects and mute control
+- Per-game statistics
 - Interactive profit charts
-- Achievement system
-- Daily virtual-credit rewards
-- Import/export save files
-- Player-selectable themes
-- Automated unit tests for payout rules
-- Automated tests for rolling analytics
+- Achievements
+- Daily virtual-credit challenges
+- Save import/export
+- Automated unit tests
 - Accessibility improvements
 - Reduced-motion mode
-- Optional backend accounts for synchronized progress
-
-## Technical decisions
-
-### Why vanilla JavaScript?
-
-The project does not need a large framework for its current size. Vanilla JavaScript keeps deployment simple, removes package-management requirements, and makes the game logic easy to inspect directly in the repository.
-
-### Why localStorage?
-
-The requirement was to save progress locally. `localStorage` is built into modern browsers, requires no server, persists across reloads, and works well for a single-player virtual-credit game.
-
-### Why one shared ledger?
-
-All games affect the same wallet, so a shared transaction history provides one consistent source for analytics. The application does not need separate 24-hour, 7-day, and 30-day counters; those values can always be recomputed from timestamped results.
-
-### Why integer cents?
-
-Representing money as cents avoids floating-point precision problems and makes transaction calculations predictable.
+- Optional account-based cloud saves
 
 ## Disclaimer
 
-NEON VAULT is an educational and entertainment software project. All credits are fictional and have no cash value. The project contains no functionality for real-money wagering, deposits, withdrawals, purchases, or cash-outs.
+NEON VAULT is an educational and entertainment software project. All credits are fictional and have no cash value. The project contains no real-money wagering, deposits, withdrawals, purchases, or cash-outs.
