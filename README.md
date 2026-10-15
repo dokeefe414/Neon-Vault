@@ -27,6 +27,7 @@ The current build now uses:
 - no global function override chain
 - backward-compatible save keys
 - automated modular smoke tests
+- Playwright end-to-end browser tests on desktop and mobile viewports
 
 Existing users keep the same wallet/history because the persistent keys remain:
 
@@ -55,6 +56,7 @@ See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full design.
 - Responsive desktop/mobile layout
 - Web Crypto API randomness
 - GitHub Actions quality checks
+- Automated Chromium browser regression testing
 
 # Games
 
@@ -252,6 +254,7 @@ Neon-Vault/
 ├── creator.css
 ├── pro.css
 ├── package.json
+├── playwright.config.js
 ├── README.md
 ├── ARCHITECTURE.md
 ├── src/
@@ -274,7 +277,9 @@ Neon-Vault/
 │       ├── common.js
 │       └── views.js
 ├── tests/
-│   └── smoke.test.cjs
+│   ├── smoke.test.cjs
+│   └── e2e/
+│       └── neon-vault.spec.js
 └── .github/
     └── workflows/
         └── quality.yml
@@ -296,11 +301,29 @@ Then open:
 http://localhost:8000
 ```
 
-Node.js 20+ is used for repository checks:
+Node.js 20+ is used for repository checks.
+
+Install development dependencies once:
+
+```bash
+npm install
+npx playwright install chromium
+```
+
+Then run:
 
 ```bash
 npm run check
 npm test
+npm run test:e2e
+```
+
+Useful browser-test commands:
+
+```bash
+npm run test:e2e:desktop
+npm run test:e2e:mobile
+npm run test:all
 ```
 
 `npm run check` syntax-checks every JavaScript module under `src/`.
@@ -317,9 +340,32 @@ npm test
 - navigation guards
 - progression services
 
+`npm run test:e2e` launches a real local web server and Chromium through Playwright. The browser suite checks both a desktop viewport and a mobile viewport and exercises real user flows such as:
+
+- clean dashboard startup and initial wallet
+- navigation across every main screen
+- Dice settlement and persistence after reload
+- Roulette settlement and activity history
+- Slots settlement and post-animation usability
+- Blackjack deal/settlement flow
+- Blackjack active-hand navigation confirmation
+- Trivia category persistence
+- Profile save export
+- mobile navigation and touch-size controls
+- uncaught browser runtime errors
+
 # Continuous integration
 
-GitHub Actions automatically runs syntax and smoke tests on pushes and pull requests targeting `main`.
+GitHub Actions automatically runs the complete quality pipeline on pushes and pull requests targeting `main`:
+
+1. install Node dependencies
+2. syntax-check all source modules
+3. run architecture/smoke tests
+4. install Chromium
+5. run Playwright desktop + mobile end-to-end tests
+6. upload Playwright HTML reports, screenshots, videos, and traces when available
+
+Playwright artifacts are retained for 14 days so browser failures can be reproduced and debugged from GitHub Actions.
 
 # Hosting
 
