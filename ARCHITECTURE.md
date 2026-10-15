@@ -1,150 +1,271 @@
-# NEON VAULT Architecture
+# NEON VAULT Architecture — v3
 
-NEON VAULT is intentionally framework-free. The application is built with browser-native HTML, CSS, JavaScript, localStorage, SVG, Web Audio, and the Web Crypto API.
+NEON VAULT is a framework-free browser application built with native HTML, CSS, ES modules, `localStorage`, SVG, Web Audio, and the Web Crypto API.
 
-## Runtime layers
+The v3 refactor removes the old script-override architecture. The browser now loads **one JavaScript entry point**:
 
-The scripts are loaded in a deliberate order:
+```html
+<script type="module" src="src/app.js"></script>
+```
 
-1. `app.js` — original application state, wallet, history, dashboard, base games, shared helpers.
-2. `trivia-questions.js` — legacy expanded trivia data retained for compatibility/history.
-3. `trivia-balanced.js` — the active 200-question balanced pool and persistent no-repeat base.
-4. `shoe.js` — six-deck Blackjack shoe.
-5. `blackjack-actions.js` — Split and Double Down hand model.
-6. `pro-core.js` — progression, XP, levels, achievements, daily challenges, analytics, charts, settings, audio, import/export.
-7. `games-pro.js` — casino-style Roulette and five-reel Slots.
-8. `trivia-pro.js` — categories, difficulty ramping, and category-aware no-repeat behavior.
-9. `blackjack-pro.js` — Insurance, Surrender, and progression hooks.
-10. `boot.js` — final integration pass and initial render after every enhancement layer is loaded.
+Every subsystem is imported explicitly from the `src/` tree. No game depends on another file redefining global functions after load.
 
-This layered structure allows the project to preserve old saves and working gameplay while progressively replacing individual systems.
+## Source tree
 
-## Persistent state
+```text
+src/
+├── app.js
+├── core/
+│   ├── random.js
+│   ├── store.js
+│   └── utils.js
+├── data/
+│   └── trivia.js
+├── games/
+│   ├── blackjack.js
+│   ├── dice.js
+│   ├── roulette.js
+│   ├── slots.js
+│   └── trivia.js
+├── progression/
+│   └── progression.js
+└── ui/
+    ├── common.js
+    └── views.js
+```
 
-### Core save
+## Application entry point
 
-Key: `neon-vault-save-v1`
+`src/app.js` is the composition root.
+
+Responsibilities:
+- imports each game module
+- owns current navigation state
+- maps routes/views to render functions
+- guards active Blackjack hands and uncashed Trivia pots
+- applies preferences
+- initializes achievements and daily challenges
+- provides a render error boundary
+
+The game registry is explicit rather than dynamically discovered.
+
+## Core layer
+
+### `src/core/store.js`
+
+Owns all persistent application state and all wallet mutations.
+
+Core save key:
+
+```text
+neon-vault-save-v1
+```
 
 Stores:
-- wallet balance in integer cents
+- balance in integer cents
 - timestamped P/L ledger
-- detailed activity history
-- legacy trivia seen-state when present
+- detailed settlement history
 
-### Progression save
+Progression save key:
 
-Key: `neon-vault-meta-v2`
+```text
+neon-vault-meta-v2
+```
 
 Stores:
-- XP and level progression
-- achievements
-- daily challenge progress
-- gameplay flags used by achievements
-- sound/reduced-motion/theme preferences
-- selected trivia category
-- category-aware trivia seen pools
+- XP
+- achievement unlocks
+- daily challenge state
+- gameplay achievement flags
+- sound/reduced-motion/theme settings
+- Trivia category and seen pools
+- Slots free-spin state
 
-Keeping progression metadata separate makes migration safer and preserves compatibility with earlier versions of NEON VAULT.
+The keys intentionally remain unchanged so users upgrading from the older build keep their balance and history.
 
-## Currency model
+All game payouts use the same `debit()` and `settle()` service. Games cannot independently manipulate transaction-history accounting.
 
-All virtual currency is stored in integer cents. For example, `$25.00` is represented as `2500`. This avoids floating-point money errors.
+### `src/core/random.js`
 
-NEON VAULT is strictly a virtual-credit simulation. Credits have no monetary value and cannot be purchased, deposited, withdrawn, transferred, or redeemed.
+Owns random number generation and shuffling.
 
-## Randomness
+Outcomes use `crypto.getRandomValues()` with rejection sampling. `Math.random()` is not used for game outcomes.
 
-Game outcomes use `crypto.getRandomValues()` with rejection sampling instead of `Math.random()`. This is used by shuffling and random game outcomes.
+### `src/core/utils.js`
 
-## Blackjack model
+Contains small dependency-free helpers such as:
+- currency formatting
+- DOM lookup
+- HTML escaping
+- date keys
+- shared constants
 
-Blackjack uses a six-deck shoe and supports:
-- Hit
-- Stand
-- Split (one split maximum)
+## Game modules
+
+Each game owns only its temporary round/session state and rules.
+
+### Blackjack
+
+`src/games/blackjack.js` is a single Blackjack state machine. It replaces the previous three-file override chain.
+
+Supports:
+- six-deck shoe
+- Hit / Stand
 - Double Down
-- Insurance when the dealer shows an Ace
-- Late Surrender before the player takes another action
+- one Split maximum
+- split aces receiving one card each
+- Insurance
+- late Surrender
+- natural Blackjack at 3:2
+- dealer stands on 17
 - Perfect Pairs
 - 21+3
+- explicit forfeit settlement when leaving an active hand
 
-Split hands are settled and logged independently. Split aces receive one additional card per hand. Side bets settle independently of the main wager.
+Rendering a hand is side-effect free: UI rendering does not advance game state.
 
-## Roulette model
+### Roulette
 
-European single-zero wheel (`0–36`) with:
-- straight-up number bets
+`src/games/roulette.js` supports European single-zero Roulette:
+- straight-up numbers
 - red / black
 - odd / even
-- 1–18 / 19–36
+- low / high
 - dozens
 - columns
 
-## Slots model
+The financial settlement occurs before presentation animation begins. This prevents a refresh/navigation during animation from losing a paid result.
 
-Five reels × three rows with seven paylines.
+### Slots
 
-Features:
+`src/games/slots.js` owns:
+- five reels × three rows
+- seven paylines
 - weighted symbols
-- left-to-right matching payouts
-- wild symbol
-- scatter symbol
-- free-spin bonus
-- responsive reel animation
+- wilds
+- scatters
+- persistent free spins
+- triggering-wager preservation
 
-## Trivia model
+Free-spin count and triggering wager are stored in progression metadata so navigating away does not alter the bonus value.
 
-The active bank contains 200 questions.
+### Dice
 
-Features:
-- mostly easy/common-knowledge questions
-- medium/hard questions mixed into later streak positions
+`src/games/dice.js` contains the complete two-dice high/low game and has no persistent round state.
+
+### Trivia Rescue
+
+Question data lives separately in `src/data/trivia.js`.
+
+`src/games/trivia.js` owns:
 - category selection
-- category-aware no-repeat tracking
-- escalating reward ladder
-- bankroll-recovery use case
+- streak and pot state
+- difficulty progression
+- persistent no-repeat tracking
+- cash-out logic
+- $0-bankroll recovery tracking
 
-## Progression
+The active bank contains exactly 200 unique prompts.
 
-Settled gameplay grants XP. XP is used to calculate player levels and cosmetic titles. Higher levels unlock additional visual themes.
+## Progression layer
 
-Achievements are evaluated from both the transaction history and gameplay flags. Daily challenges use local calendar dates and automatically award virtual credits and XP when completed.
+`src/progression/progression.js` subscribes to store settlement events rather than overriding the settlement function.
 
-## Analytics
+It derives and manages:
+- XP and levels
+- titles
+- achievements
+- daily challenges
+- per-game statistics
+- win streaks
+- bankroll-history reconstruction
 
-The dashboard reconstructs historical bankroll values from the transaction history and renders the graph as inline SVG. Supported time ranges are:
-- 24 hours
-- 7 days
-- 30 days
-- lifetime
+Derived statistics are calculated from settlement history instead of duplicated into persistent state.
 
-Per-game performance is derived from the activity ledger rather than stored as duplicated state.
+## UI layer
 
-## Accessibility and UX
+### `src/ui/common.js`
 
-The application includes:
-- responsive desktop/mobile layouts
-- keyboard-accessible native buttons and inputs
-- reduced-motion preference
-- optional generated sound effects
-- visible text status messages in addition to color
-- virtual-credit disclaimers
+Shared interaction helpers:
+- wallet rendering
+- toast/status feedback
+- generated sound effects
+- wager parsing
+- half/double wager controls
+- theme/reduced-motion application
+
+### `src/ui/views.js`
+
+Owns non-game screens:
+- Dashboard
+- Activity
+- Player Profile
+- Achievements
+- Daily Challenge
+- bankroll SVG chart
+- save export/import
+- settings
+
+## Currency and accounting model
+
+All virtual credits are represented as integer cents.
+
+Example:
+
+```text
+$25.00 = 2500
+```
+
+A wager is first debited from the wallet. Settlement then credits the payout and writes one immutable history record:
+
+```text
+net = payout - wager
+```
+
+This keeps the wallet, activity ledger, analytics, and exported saves aligned.
+
+NEON VAULT is strictly a virtual-credit simulation. Credits have no monetary value and cannot be purchased, deposited, withdrawn, transferred, or redeemed.
 
 ## Save portability
 
-The Profile page can export the complete local save to JSON and restore it later. Imports validate the required wallet/history structure before replacing local progress.
+The Profile screen can export a versioned JSON backup containing both save objects. Import validates wallet/history structure before replacing local progress.
+
+## Reliability rules introduced by the refactor
+
+- one ES-module entry point
+- no global function overrides
+- one centralized transaction service
+- explicit game registry
+- explicit navigation lifecycle
+- active-hand/pot navigation guards
+- settlement before asynchronous animation
+- view-aware animation completion
+- persistent bonus state
+- browser error boundary
+- backward-compatible save keys
 
 ## Quality checks
-
-`package.json` provides:
 
 ```bash
 npm run check
 npm test
 ```
 
+`npm run check` syntax-checks every JavaScript module under `src/`.
+
+`npm test` verifies architectural contracts including:
+- one-script module runtime
+- required module files
+- legacy save-key compatibility
+- Web Crypto RNG
+- Blackjack feature/rule presence
+- Roulette and Slots feature contracts
+- Trivia bank size and unique prompts
+- navigation guards
+- progression services
+
 GitHub Actions runs both commands on pushes and pull requests to `main`.
 
-## Future backend path
+## Backend boundary
 
-The static GitHub Pages build deliberately does not contain account credentials or server secrets. If cloud accounts are added later, authentication and cloud persistence should live behind a real backend/API rather than embedding secrets in client-side JavaScript.
+The current GitHub Pages release is entirely client-side and intentionally contains no account credentials or private server secrets. A future cloud-account implementation should place authentication and persistent server data behind a real backend/API rather than embedding credentials in browser code.
