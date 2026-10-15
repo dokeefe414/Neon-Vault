@@ -56,14 +56,17 @@ export class BlackjackGame{
     $('content').innerHTML=`<div class="game-panel"><span class="pill">VIRTUAL TABLE</span><h2 style="margin-top:16px">Blackjack</h2><p>Blackjack pays 3:2. Dealer stands on 17. Split, Double Down, Insurance, Surrender, Perfect Pairs, and 21+3 are supported.</p><div class="blackjack-rules"><span class="rule-chip">Dealer stands on 17</span><span class="rule-chip">Blackjack 3:2</span><span class="rule-chip">1 split max</span><span class="rule-chip">Split aces: 1 card</span><span class="rule-chip">Insurance 2:1</span><span class="rule-chip">Late surrender</span></div><div class="controls"><label for="bet">Main wager ($)</label><input id="bet" type="number" min="1" max="10000" step="1" value="25"><button class="secondary" data-bet-adjust="half">½ BET</button><button class="secondary" data-bet-adjust="double">2× BET</button><button class="primary" id="play">DEAL</button></div><div class="controls" style="margin-top:-5px"><label for="pairBet">Perfect Pairs ($)</label><input id="pairBet" type="number" min="0" max="10000" step="1" value="0"><label for="pokerBet">21+3 ($)</label><input id="pokerBet" type="number" min="0" max="10000" step="1" value="0"></div><p class="hint">Perfect Pairs: mixed 6:1 · colored 12:1 · perfect 25:1. 21+3: flush 5:1 · straight 10:1 · trips 30:1 · straight flush 40:1 · suited trips 100:1.</p><div id="table" class="felt"><div class="hint">Your cards will appear here.</div></div><div id="message" class="result"></div><div id="sideMessage" class="hint"></div><div id="actions" class="controls"></div></div>`;
     wireBetButtons();
     $('play').onclick=()=>this.start();
-    if(this.round)this.renderRound(false);
+    if(this.round){
+      this.renderRound(false);
+      if(this.round.dealer[0].r==='A'&&!this.round.insuranceResolved)this.offerInsurance();
+      else this.renderActions();
+    }
   }
   currentHand(){return this.round?.hands?.[this.round.activeHand]||null;}
   renderRound(reveal=false){
     const r=this.round;if(!r)return;
     const dealer=reveal?cardsHtml(r.dealer):cardsHtml(r.dealer.slice(0,1))+'<span class="playing-card back">◆</span>';
     $('table').innerHTML=`<div class="hint">DEALER · ${reveal?handTotal(r.dealer):'?'}</div><div class="hand">${dealer}</div><div style="display:grid;grid-template-columns:${r.hands.length>1?'repeat(2,minmax(0,1fr))':'1fr'};gap:16px;margin-top:18px">${r.hands.map((hand,i)=>{const total=handTotal(hand.cards),active=!r.settled&&i===r.activeHand;return `<div style="padding:14px;border:1px solid ${active?'#54f0c1':'#36786e'};border-radius:16px;background:${active?'#0f3c38aa':'#0b292b88'}"><div class="hint">${r.hands.length>1?`HAND ${i+1}`:'YOU'} · ${total} · WAGER ${money(hand.bet)}${active?' · ACTIVE':''}</div><div class="hand">${cardsHtml(hand.cards)}</div>${total>21?'<div class="hint">BUST</div>':hand.stood?`<div class="hint">${hand.doubled?'DOUBLE DOWN · ':''}STOOD</div>`:''}</div>`;}).join('')}</div>`;
-    if(!reveal)this.renderActions();
   }
   start(){
     if(this.hasActiveRound()){toast('Finish the current hand first','loss');return;}
@@ -93,14 +96,15 @@ export class BlackjackGame{
     const canSplit=r.hands.length===1&&hand.cards.length===2&&hand.cards[0].r===hand.cards[1].r&&getState().balance>=hand.bet;
     const canSurrender=hand.cards.length===2&&!hand.fromSplit&&!hand.doubled&&r.hands.length===1&&!r.actionTaken;
     $('actions').innerHTML=`<button class="primary" id="hit">HIT</button><button class="secondary" id="stand">STAND</button>${canDouble?'<button class="secondary" id="doubleDown">DOUBLE DOWN</button>':''}${canSplit?'<button class="secondary" id="splitHand">SPLIT</button>':''}${canSurrender?'<button class="secondary danger" id="surrender">SURRENDER</button>':''}`;
-    $('hit').onclick=()=>{r.actionTaken=true;hand.cards.push(r.shoe.pop());if(handTotal(hand.cards)>=21)hand.stood=true;this.renderRound(false);if(hand.stood)this.advance();};
+    $('hit').onclick=()=>{r.actionTaken=true;hand.cards.push(r.shoe.pop());if(handTotal(hand.cards)>=21)hand.stood=true;this.renderRound(false);if(hand.stood)this.advance();else this.renderActions();};
     $('stand').onclick=()=>{r.actionTaken=true;hand.stood=true;this.advance();};
     if(canDouble)$('doubleDown').onclick=()=>this.doubleDown();
     if(canSplit)$('splitHand').onclick=()=>this.split();
     if(canSurrender)$('surrender').onclick=()=>this.surrender();
   }
   offerInsurance(){
-    const r=this.round,cost=Math.floor(r.hands[0].bet/2),afford=getState().balance>=cost;
+    const r=this.round;if(!r)return;
+    const cost=Math.floor(r.hands[0].bet/2),afford=getState().balance>=cost;
     $('actions').innerHTML=`<div class="insurance-callout"><strong>Dealer shows an Ace.</strong> Insurance costs ${money(cost)} and pays 2:1 if the dealer has Blackjack.</div><button class="secondary" id="declineInsurance">NO INSURANCE</button>${afford?'<button class="primary" id="takeInsurance">TAKE INSURANCE</button>':''}`;
     $('declineInsurance').onclick=()=>this.resolveInsurance(false,cost);
     if(afford)$('takeInsurance').onclick=()=>this.resolveInsurance(true,cost);
@@ -114,11 +118,11 @@ export class BlackjackGame{
     if(dealerNatural||handTotal(r.hands[0].cards)===21)this.finish();else this.renderActions();
   }
   doubleDown(){
-    const r=this.round,hand=this.currentHand();if(!hand||hand.cards.length!==2||getState().balance<hand.bet)return;
+    const r=this.round,hand=this.currentHand();if(!r||!hand||hand.cards.length!==2||getState().balance<hand.bet)return;
     r.actionTaken=true;debit(hand.bet,'Blackjack double down');hand.bet*=2;hand.doubled=true;hand.cards.push(r.shoe.pop());hand.stood=true;this.renderRound(false);this.advance();
   }
   split(){
-    const r=this.round,hand=this.currentHand();if(!hand||r.hands.length!==1||hand.cards.length!==2||hand.cards[0].r!==hand.cards[1].r||getState().balance<hand.bet)return;
+    const r=this.round,hand=this.currentHand();if(!r||!hand||r.hands.length!==1||hand.cards.length!==2||hand.cards[0].r!==hand.cards[1].r||getState().balance<hand.bet)return;
     r.actionTaken=true;debit(hand.bet,'Blackjack split');
     const [first,second]=hand.cards,aces=first.r==='A';
     r.hasSplit=true;r.hands=[{cards:[first,r.shoe.pop()],bet:hand.bet,stood:aces,doubled:false,fromSplit:true},{cards:[second,r.shoe.pop()],bet:hand.bet,stood:aces,doubled:false,fromSplit:true}];r.activeHand=0;
@@ -133,7 +137,7 @@ export class BlackjackGame{
     const r=this.round;if(!r)return;
     let next=r.activeHand+1;
     while(next<r.hands.length&&(r.hands[next].stood||handTotal(r.hands[next].cards)>=21)){r.hands[next].stood=true;next++;}
-    if(next<r.hands.length){r.activeHand=next;this.renderRound(false);}else this.finish();
+    if(next<r.hands.length){r.activeHand=next;this.renderRound(false);this.renderActions();}else this.finish();
   }
   settleHand(hand,dealerTotal,dealerNatural){
     const playerTotal=handTotal(hand.cards),playerNatural=!hand.fromSplit&&hand.cards.length===2&&playerTotal===21;
