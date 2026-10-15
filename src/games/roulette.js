@@ -6,6 +6,7 @@ import {signal} from '../progression/progression.js';
 
 const reds=new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
 const color=n=>n===0?'green':reds.has(n)?'red':'black';
+const isActiveView=()=>document.querySelector('.nav[data-view="roulette"]')?.classList.contains('active');
 
 export class RouletteGame{
   constructor(){this.pick={type:'red',value:null};this.spinning=false;}
@@ -49,6 +50,7 @@ export class RouletteGame{
     this.render();
     const finish=()=>{
       this.spinning=false;
+      if(!isActiveView())return;
       const ball=$('rouletteBall');
       if(ball){ball.classList.remove('spinning');ball.textContent=number;ball.style.color=number===0?'var(--mint)':reds.has(number)?'#ff8ba0':'#fff';}
       if($('message'))$('message').textContent=`${number} ${color(number).toUpperCase()} · ${label} · ${result.win?'WIN':'LOSS'}`;
