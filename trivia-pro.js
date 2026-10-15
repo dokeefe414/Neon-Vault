@@ -44,14 +44,26 @@
     if(!source.length)return [];
 
     let unseen=source.filter(q=>!map[key].includes(q.q));
-    if(unseen.length<count){
-      // Reset only the exact category+difficulty bucket that has been exhausted.
-      map[key]=[];
-      unseen=[...source];
+    let picked=[];
+
+    // Use every remaining unseen question first. Only after the bucket is truly
+    // exhausted do we reset it and fill any remaining slots for this run.
+    if(unseen.length){
+      const first=shuffle([...unseen]).slice(0,Math.min(count,unseen.length));
+      picked.push(...first);
+      map[key].push(...first.map(q=>q.q));
     }
 
-    const picked=shuffle([...unseen]).slice(0,Math.min(count,unseen.length));
-    map[key].push(...picked.map(q=>q.q));
+    const stillNeeded=count-picked.length;
+    if(stillNeeded>0){
+      map[key]=[];
+      const alreadyThisRun=new Set(picked.map(q=>q.q));
+      const resetPool=shuffle(source.filter(q=>!alreadyThisRun.has(q.q)));
+      const second=resetPool.slice(0,Math.min(stillNeeded,resetPool.length));
+      picked.push(...second);
+      map[key].push(...second.map(q=>q.q));
+    }
+
     NVPro.saveMeta();
     return picked;
   }
@@ -85,8 +97,6 @@
       uniqueAppend(questions,pickNoRepeat(balancedTriviaQuestions,10-questions.length,'General'));
     }
 
-    // Preserve the intended payout-ladder difficulty curve instead of shuffling
-    // the selected easy/medium/hard sequence after selection.
     questions=questions.slice(0,10);
     trivia={questions,index:0,streak:0,pot:0,locked:false,startedBroke:state.balance===0,category};
   };
