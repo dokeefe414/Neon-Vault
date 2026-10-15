@@ -16,17 +16,14 @@ export class TriviaGame{
     if(!Array.isArray(meta.triviaSeenPro[key]))meta.triviaSeenPro[key]=[];
     const source=(difficulty?pool.filter(q=>q.difficulty===difficulty):pool).filter(q=>!exclude.has(q.q));
     if(!source.length)return [];
-    let unseen=source.filter(q=>!meta.triviaSeenPro[key].includes(q.q));
     const picked=[];
-    while(picked.length<count&&unseen.length){
-      const batch=shuffle(unseen);
-      while(batch.length&&picked.length<count){const q=batch.pop();picked.push(q);exclude.add(q.q);}
-      unseen=[];
-    }
+    const unseen=shuffle(source.filter(q=>!meta.triviaSeenPro[key].includes(q.q)));
+    while(unseen.length&&picked.length<count)picked.push(unseen.pop());
     if(picked.length<count){
       meta.triviaSeenPro[key]=[];
-      const refill=shuffle(source.filter(q=>!exclude.has(q.q)));
-      while(refill.length&&picked.length<count){const q=refill.pop();picked.push(q);exclude.add(q.q);}
+      const already=new Set(picked.map(q=>q.q));
+      const refill=shuffle(source.filter(q=>!already.has(q.q)));
+      while(refill.length&&picked.length<count)picked.push(refill.pop());
     }
     meta.triviaSeenPro[key].push(...picked.map(q=>q.q));
     saveMeta();
