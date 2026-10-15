@@ -3,50 +3,62 @@
 const fs=require('fs');
 const path=require('path');
 const assert=require('assert');
+const {pathToFileURL}=require('url');
 
 const root=path.resolve(__dirname,'..');
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 
 const required=[
-  'index.html','style.css','pro.css','app.js','shoe.js','blackjack-actions.js','blackjack-pro.js',
-  'trivia-questions.js','trivia-balanced.js','trivia-pro.js','pro-core.js','games-pro.js','boot.js',
-  'navigation-guard.js','README.md'
+  'index.html','style.css','creator.css','pro.css','README.md','ARCHITECTURE.md',
+  'src/app.js','src/core/utils.js','src/core/random.js','src/core/store.js',
+  'src/ui/common.js','src/ui/views.js','src/progression/progression.js','src/data/trivia.js',
+  'src/games/blackjack.js','src/games/roulette.js','src/games/slots.js','src/games/dice.js','src/games/trivia.js'
 ];
-required.forEach(file=>assert.ok(fs.existsSync(path.join(root,file)),`Missing required file: ${file}`));
+required.forEach(file=>assert.ok(fs.existsSync(path.join(root,file)),`Missing required modular file: ${file}`));
 
 const index=read('index.html');
-['pro.css','pro-core.js','games-pro.js','trivia-pro.js','blackjack-pro.js','boot.js','navigation-guard.js'].forEach(asset=>{
-  assert.ok(index.includes(asset),`index.html is not loading ${asset}`);
-});
+assert.ok(index.includes('type="module" src="src/app.js"'),'index.html must use the single ES-module entry point');
+assert.equal((index.match(/<script/g)||[]).length,1,'index.html should load exactly one script');
 assert.ok(index.includes('VIRTUAL CREDITS ONLY'),'Virtual-credit disclaimer must stay visible');
 assert.ok(index.includes('Created by Daniel O\'Keefe'),'Creator credit is missing');
 
-const app=read('app.js');
-assert.ok(app.includes('crypto.getRandomValues'),'Game RNG must use crypto.getRandomValues');
-assert.ok(!app.includes('Math.random('),'Do not use Math.random for game outcomes');
+const store=read('src/core/store.js');
+assert.ok(store.includes("STATE_KEY='neon-vault-save-v1'"),'Legacy wallet/history save key must stay compatible');
+assert.ok(store.includes("META_KEY='neon-vault-meta-v2'"),'Legacy progression save key must stay compatible');
+assert.ok(store.includes('function settle('),'Central settlement service is missing');
 
-const blackjack=read('blackjack-pro.js');
-['DOUBLE DOWN','SPLIT','SURRENDER','TAKE INSURANCE'].forEach(term=>assert.ok(blackjack.includes(term),`Blackjack action missing: ${term}`));
-assert.ok(blackjack.includes("while(total(r.dealer)<17)"),'Dealer must play out hands to 17');
+const random=read('src/core/random.js');
+assert.ok(random.includes('crypto.getRandomValues'),'Game RNG must use crypto.getRandomValues');
+assert.ok(!random.includes('Math.random('),'Do not use Math.random for game outcomes');
 
-const rouletteSlots=read('games-pro.js');
-['dozen1','column1','FREE SPIN','7 PAYLINES'].forEach(term=>assert.ok(rouletteSlots.includes(term),`Enhanced game rule missing: ${term}`));
-assert.ok(rouletteSlots.includes('freeSpinBet'),'Free spins must preserve the triggering wager');
-assert.ok(rouletteSlots.includes('saveSlotState'),'Free-spin state must persist across navigation/reloads');
-assert.ok(rouletteSlots.includes("log('Roulette',bet,payout,{quiet:true})"),'Roulette must settle before its animation finishes');
-assert.ok(rouletteSlots.includes("log(game,logBet,payout,{quiet:true})"),'Slots must settle before its animation finishes');
+const blackjack=read('src/games/blackjack.js');
+['DOUBLE DOWN','SPLIT','SURRENDER','TAKE INSURANCE','Perfect Pairs','21+3'].forEach(term=>assert.ok(blackjack.includes(term),`Blackjack rule missing: ${term}`));
+assert.ok(blackjack.includes('while(handTotal(r.dealer)<17)'),'Dealer must play out hands to 17');
+assert.ok(blackjack.includes('abandon()'),'Blackjack must support explicit forfeit settlement on navigation');
 
-const trivia=read('trivia-balanced.js');
-assert.ok(trivia.includes('Exactly 200 questions'),'Balanced trivia pool contract is missing');
-const triviaPro=read('trivia-pro.js');
-['Geography','Science','Sports','Math','History & Culture','Technology'].forEach(cat=>assert.ok(triviaPro.includes(cat),`Trivia category missing: ${cat}`));
-assert.ok(triviaPro.includes('bucketKey(category,difficulty)'),'Trivia no-repeat tracking must be difficulty-aware');
+const roulette=read('src/games/roulette.js');
+['dozen1','column1','mult:36','roulette-straight-win'].forEach(term=>assert.ok(roulette.includes(term),`Roulette feature missing: ${term}`));
 
-const navGuard=read('navigation-guard.js');
-assert.ok(navGuard.includes("round&&view==='blackjack'"),'Active Blackjack navigation guard is missing');
-assert.ok(navGuard.includes("trivia&&view==='trivia'&&trivia.pot>0"),'Uncashed Trivia navigation guard is missing');
+const slots=read('src/games/slots.js');
+['7 PAYLINES','freeSpinBet','slot-bonus','Slots · Free Spin'].forEach(term=>assert.ok(slots.includes(term),`Slots feature missing: ${term}`));
 
-const pro=read('pro-core.js');
-['ACHIEVEMENTS','DAILY CHALLENGE','EXPORT SAVE','IMPORT SAVE','bankroll-chart'].forEach(term=>assert.ok(pro.includes(term),`Professional feature missing: ${term}`));
+const triviaGame=read('src/games/trivia.js');
+assert.ok(triviaGame.includes('bucketKey(category,difficulty)'),'Trivia no-repeat tracking must be category/difficulty aware');
+assert.ok(triviaGame.includes('10-question streak! Auto-cashed'),'Trivia 10-question auto cash-out is missing');
 
-console.log('NEON VAULT smoke tests passed.');
+const progression=read('src/progression/progression.js');
+['achievements','dailyChallenge','bankrollPoints','rouletteStraightWin','slotBonus'].forEach(term=>assert.ok(progression.includes(term),`Progression feature missing: ${term}`));
+
+const app=read('src/app.js');
+assert.ok(app.includes('const games={blackjack:blackjackGame'),'App must use explicit game registry');
+assert.ok(app.includes('blackjackGame.abandon()'),'Router must protect active Blackjack hands');
+assert.ok(app.includes('triviaGame.abandon()'),'Router must protect uncashed Trivia pots');
+
+(async()=>{
+  const moduleUrl=pathToFileURL(path.join(root,'src/data/trivia.js')).href;
+  const trivia=await import(moduleUrl);
+  assert.equal(trivia.triviaQuestions.length,200,'Trivia bank must contain exactly 200 questions');
+  assert.equal(new Set(trivia.triviaQuestions.map(q=>q.q)).size,200,'Trivia question prompts must be unique');
+  ['General','Geography','Science','Sports','Math','History & Culture','Technology'].forEach(category=>assert.ok(trivia.triviaCategories.includes(category),`Trivia category missing: ${category}`));
+  console.log('NEON VAULT modular smoke tests passed.');
+})().catch(error=>{console.error(error);process.exit(1);});
