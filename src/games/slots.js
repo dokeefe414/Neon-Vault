@@ -16,6 +16,7 @@ const symbols=[
 const paylines=[[1,1,1,1,1],[0,0,0,0,0],[2,2,2,2,2],[0,1,2,1,0],[2,1,0,1,2],[0,0,1,2,2],[2,2,1,0,0]];
 const def=value=>symbols.find(x=>x.value===value);
 const spinSymbol=()=>weightedChoice(symbols.map(x=>({value:x.value,weight:x.weight})));
+const isActiveView=()=>document.querySelector('.nav[data-view="slots"]')?.classList.contains('active');
 
 export class SlotsGame{
   constructor(){this.spinning=false;}
@@ -92,6 +93,7 @@ export class SlotsGame{
     if(gridEl&&!getMeta().reduceMotion)gridEl.classList.add('spinning');
     setTimeout(()=>{
       this.spinning=false;
+      if(!isActiveView())return;
       const el=$('slotGrid');
       if(el){el.classList.remove('spinning');el.innerHTML=Array.from({length:15},(_,i)=>`<div class="slot-cell">${grid[Math.floor(i/5)][i%5]}</div>`).join('');}
       if($('freeSpins'))$('freeSpins').textContent=freeSpins;
