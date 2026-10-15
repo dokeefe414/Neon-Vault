@@ -1,10 +1,11 @@
 {
   "name": "neon-vault",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "private": true,
-  "description": "A polished virtual-credit casino and progression game built with vanilla HTML, CSS, and JavaScript.",
+  "type": "module",
+  "description": "A modular virtual-credit casino and progression game built with vanilla HTML, CSS, and JavaScript.",
   "scripts": {
-    "check": "node --check app.js && node --check shoe.js && node --check blackjack-actions.js && node --check blackjack-pro.js && node --check trivia-questions.js && node --check trivia-balanced.js && node --check trivia-pro.js && node --check pro-core.js && node --check games-pro.js && node --check boot.js && node --check navigation-guard.js",
+    "check": "find src -name '*.js' -print0 | xargs -0 -n1 node --check",
     "test": "node tests/smoke.test.cjs"
   },
   "engines": {
