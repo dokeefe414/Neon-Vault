@@ -2,7 +2,7 @@
 
 **Created by Daniel O'Keefe**
 
-NEON VAULT is a polished browser-based virtual casino and progression game built with **HTML, CSS, and vanilla JavaScript**. It combines casino-style gameplay, a shared virtual wallet, persistent local saves, player progression, achievements, daily challenges, analytics, and a skill-based Trivia Rescue mode.
+NEON VAULT is a polished browser-based virtual casino and progression game built with **HTML, CSS, and vanilla ES-module JavaScript**. It combines casino-style gameplay, a shared virtual wallet, persistent local saves, player progression, achievements, daily challenges, analytics, and a skill-based Trivia Rescue mode.
 
 > **Virtual credits only.** NEON VAULT does not support real-money gambling, deposits, purchases, withdrawals, transfers, or cash-outs. Credits have no monetary value.
 
@@ -10,63 +10,72 @@ NEON VAULT is a polished browser-based virtual casino and progression game built
 
 https://dokeefe414.github.io/Neon-Vault/
 
-## Core features
+## v3 refactor
+
+The v3 release completely reorganized the JavaScript architecture.
+
+The previous implementation grew through multiple files that progressively overrode global functions. That approach worked, but it made behavior depend on script load order and made future changes harder to reason about.
+
+The current build now uses:
+
+- one ES-module entry point: `src/app.js`
+- explicit imports and exports
+- one centralized wallet/settlement store
+- independent game modules
+- a dedicated progression layer
+- a dedicated UI/view layer
+- no global function override chain
+- backward-compatible save keys
+- automated modular smoke tests
+
+Existing users keep the same wallet/history because the persistent keys remain:
+
+```text
+neon-vault-save-v1
+neon-vault-meta-v2
+```
+
+See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full design.
+
+# Core features
 
 - Shared starting bankroll of **$1,000 in virtual credits**
 - Persistent local save using `localStorage`
-- Rolling profit/loss for the last 24 hours, 7 days, and 30 days
-- Lifetime bankroll graph with multiple time ranges
-- Detailed transaction/activity history
-- Per-game performance statistics
-- XP, player levels, titles, and unlockable themes
-- Achievement system
-- Daily challenges with virtual-credit and XP rewards
+- Rolling profit/loss for 24 hours, 7 days, and 30 days
+- Lifetime bankroll graph
+- Activity/transaction history
+- Per-game statistics
+- XP, levels, and player titles
+- Achievements
+- Daily challenges
+- Unlockable visual themes
 - Optional generated sound effects
 - Reduced-motion mode
 - Save export/import as JSON
-- Responsive desktop and mobile layout
-- Web Crypto API randomness for game outcomes
-- Automated GitHub Actions quality checks
+- Responsive desktop/mobile layout
+- Web Crypto API randomness
+- GitHub Actions quality checks
 
 # Games
 
 ## Blackjack
 
-Blackjack uses a **six-deck shoe** and includes:
+Blackjack uses a **six-deck shoe** and is implemented as one self-contained state machine.
+
+Supported actions and rules:
 
 - Hit
 - Stand
 - Split
 - Double Down
 - Insurance
-- Surrender
-- Natural Blackjack paying 3:2
+- Late Surrender
+- Natural Blackjack pays 3:2
 - Dealer stands on 17
-- Perfect Pairs side bet
-- 21+3 side bet
-
-### Split rules
-
 - One split maximum
-- An additional equal wager is required
-- Each split hand is played and settled independently
-- Split aces receive one additional card each
-- Split-hand results are tracked separately in the activity ledger
-
-### Double Down
-
-- Available on a fresh two-card hand when the player has enough credits
-- Adds a second equal wager
-- Deals exactly one card
-- Automatically stands afterward
-
-### Insurance
-
-When the dealer shows an Ace, the player may place an insurance wager equal to half the current main wager. Insurance pays **2:1** if the dealer has Blackjack.
-
-### Surrender
-
-Before taking another action on the original two-card hand, the player may surrender and receive half of the main wager back.
+- Split aces receive one card each
+- Active-hand navigation protection
+- Abandoned hands settle as forfeits so wallet/history remain consistent
 
 ### Perfect Pairs
 
@@ -75,8 +84,6 @@ Before taking another action on the original two-card hand, the player may surre
 | Mixed pair | 6:1 |
 | Colored pair | 12:1 |
 | Perfect pair | 25:1 |
-
-A six-deck shoe allows a true same-rank, same-suit Perfect Pair.
 
 ### 21+3
 
@@ -92,7 +99,7 @@ The player's first two cards and the dealer's up-card form a three-card poker ha
 
 ## Roulette
 
-European single-zero Roulette (`0–36`) now supports:
+European single-zero Roulette (`0–36`) supports:
 
 - Straight-up number bets — 35:1
 - Red / Black — 1:1
@@ -101,20 +108,22 @@ European single-zero Roulette (`0–36`) now supports:
 - Dozens — 2:1
 - Columns — 2:1
 - Clickable number board
-- Animated wheel result presentation
+- Animated result presentation
+
+Financial settlement occurs before the animation, so navigation or refresh cannot strand a debited wager.
 
 ## Neon Reels Slots
 
-The original three-symbol slot machine has been upgraded to a **five-reel, three-row** machine with:
+Five reels × three rows with:
 
 - Seven paylines
 - Weighted symbols
 - Wild symbol (`⭐`)
 - Scatter symbol (`✨`)
-- Three or more scatters awarding free spins
-- Multiple symbol payout tiers
+- Three or more scatters awarding 3 free spins
+- Persistent free-spin count
+- Triggering wager preserved for every free spin
 - Reel animation
-- Bonus tracking
 
 ## Dice
 
@@ -129,7 +138,7 @@ Trivia Rescue is both a general-knowledge game and a bankroll-recovery mechanic.
 
 ### Reward ladder
 
-| Correct answers in a row | Cash-out value |
+| Correct answers | Cash-out value |
 |---:|---:|
 | 1 | $10 |
 | 2 | $20 |
@@ -144,35 +153,32 @@ Trivia Rescue is both a general-knowledge game and a bankroll-recovery mechanic.
 
 Rules:
 
-- First correct answer creates a $10 pot
-- Each consecutive correct answer doubles the pot
-- The player may cash out after any correct answer
-- One wrong answer wipes the uncashed pot
-- Ten correct answers automatically cash out $5,120
-- Trivia can be used to recover from a $0 bankroll
+- first correct answer creates a $10 pot
+- every consecutive correct answer doubles the pot
+- cash out after any correct answer
+- one wrong answer wipes the uncashed pot
+- 10 correct answers auto-cash $5,120
+- Trivia can rebuild a $0 bankroll
 
-### Trivia improvements
+The active bank contains **exactly 200 unique prompts**.
 
-- **200-question active pool**
-- Mostly easy/common-knowledge questions
-- Medium and hard questions mixed into later streak positions
-- Categories:
-  - General
-  - Geography
-  - Science
-  - Sports
-  - Math
-  - History & Culture
-  - Technology
-- Persistent no-repeat tracking by category
+Categories:
+
+- General
+- Geography
+- Science
+- Sports
+- Math
+- History & Culture
+- Technology
+
+Seen-question state persists locally so the game can cycle through large no-repeat pools.
 
 # Player progression
 
-## XP and levels
+Settled gameplay grants XP. XP determines player level and title.
 
-Settled gameplay grants XP. Levels unlock player titles and cosmetic themes.
-
-Example progression includes:
+Example titles include:
 
 - Rookie
 - Player
@@ -181,114 +187,61 @@ Example progression includes:
 - Vault Elite
 - Neon Legend
 
-Higher levels unlock additional visual themes such as **Midnight Purple** and **High Roller Gold**.
+Higher levels unlock additional visual themes.
 
 ## Achievements
 
-Achievements include milestones such as:
+Examples include:
 
-- First settled game
-- First Blackjack win
-- Perfect Pair hit
+- first settled game
+- Blackjack win
+- Perfect Pair
 - 10-question Trivia streak
 - $5,000 bankroll
-- 100 settled games
-- Five-game win streak
+- 100 settled results
+- five-win streak
 - $1,000+ single net win
-- Exact-number Roulette win
-- Slots bonus trigger
-- Winning after Split
-- Winning after Double Down
-- Recovering from $0 through Trivia Rescue
-- Completing a daily challenge
-- Reaching player level 5
-
-Achievements award XP and persist locally.
+- exact-number Roulette win
+- Slots bonus
+- Split win
+- Double Down win
+- recovery from $0 through Trivia
+- daily challenge completion
+- level 5
 
 ## Daily challenges
 
-A challenge is generated from the user's local calendar date. Examples include:
-
-- Settle 10 game results
-- Win three Blackjack hands
-- Win two Roulette bets
-- Win three slot spins
-- Answer five trivia questions correctly
-- Win a doubled-down Blackjack hand
-- Win after splitting
-
-Completing the challenge automatically awards **$100 virtual credits + 100 XP**.
+One challenge is generated from the local calendar date. Completing it awards **$100 virtual credits + 100 XP**.
 
 # Analytics
 
-The dashboard and Player Profile include:
+The Dashboard and Profile derive statistics from the settlement history:
 
-- Current wallet balance
-- Rolling 24-hour P/L
-- Rolling 7-day P/L
-- Rolling 30-day P/L
-- Lifetime net result
-- Biggest win
-- Biggest loss
-- Best win streak
-- Favorite game
-- Win rate
-- Per-game plays, wins, losses, and net result
-- Trivia best streak
-- SVG bankroll chart for 24H / 7D / 30D / All Time
+- current balance
+- rolling 24H / 7D / 30D P/L
+- lifetime net result
+- biggest win/loss
+- win rate
+- best win streak
+- favorite game
+- per-game results
+- bankroll history chart
 
 # Save system
 
-## Local persistence
+All virtual currency is stored internally as **integer cents** to avoid floating-point currency errors.
 
-Core save key:
-
-```text
-neon-vault-save-v1
-```
-
-Progression/settings key:
-
-```text
-neon-vault-meta-v2
-```
-
-Money is stored internally in **integer cents** to avoid floating-point currency errors.
-
-## Export / Import
-
-The Player Profile can export the complete save to a JSON file. The JSON contains:
-
-- Wallet
-- History
-- Analytics ledger
-- XP and level progress
-- Achievements
-- Daily challenge progress
-- Preferences
-- Trivia no-repeat state
-
-The Import Save feature validates the required save structure before replacing the browser's current local progress.
+The Profile page can export the complete save as JSON and import it later. Imports validate the wallet/history structure before replacing local progress.
 
 # Randomness
 
-Casino outcomes use the browser's Web Crypto API:
+Game outcomes use:
 
 ```js
 crypto.getRandomValues(...)
 ```
 
 The project uses rejection sampling and Fisher-Yates shuffling instead of `Math.random()` for game outcomes.
-
-# Accessibility and UX
-
-- Responsive desktop/mobile design
-- Native buttons, inputs, and selects
-- Reduced-motion preference
-- Optional sound effects generated with Web Audio
-- Visible status text in addition to color
-- Clear virtual-credit disclaimer
-- Large touch-friendly controls on mobile
 
 # Project structure
 
@@ -298,18 +251,28 @@ Neon-Vault/
 ├── style.css
 ├── creator.css
 ├── pro.css
-├── app.js
-├── shoe.js
-├── blackjack-actions.js
-├── blackjack-pro.js
-├── trivia-questions.js
-├── trivia-balanced.js
-├── trivia-pro.js
-├── pro-core.js
-├── games-pro.js
-├── boot.js
-├── ARCHITECTURE.md
 ├── package.json
+├── README.md
+├── ARCHITECTURE.md
+├── src/
+│   ├── app.js
+│   ├── core/
+│   │   ├── random.js
+│   │   ├── store.js
+│   │   └── utils.js
+│   ├── data/
+│   │   └── trivia.js
+│   ├── games/
+│   │   ├── blackjack.js
+│   │   ├── dice.js
+│   │   ├── roulette.js
+│   │   ├── slots.js
+│   │   └── trivia.js
+│   ├── progression/
+│   │   └── progression.js
+│   └── ui/
+│       ├── common.js
+│       └── views.js
 ├── tests/
 │   └── smoke.test.cjs
 └── .github/
@@ -317,47 +280,52 @@ Neon-Vault/
         └── quality.yml
 ```
 
-See [`ARCHITECTURE.md`](ARCHITECTURE.md) for a detailed explanation of the runtime layers, persistence model, and design decisions.
-
 # Local development
 
-No framework or build step is required to run the site.
+Because the app uses browser ES modules, run it through a local static server rather than opening `index.html` directly from `file://`.
 
-You can open `index.html` directly or serve the directory with any local static server.
+For example:
 
-For project quality checks, install Node.js 20+ and run:
+```bash
+python -m http.server 8000
+```
+
+Then open:
+
+```text
+http://localhost:8000
+```
+
+Node.js 20+ is used for repository checks:
 
 ```bash
 npm run check
 npm test
 ```
 
-`npm run check` validates JavaScript syntax.
+`npm run check` syntax-checks every JavaScript module under `src/`.
 
-`npm test` runs project smoke tests that verify critical files, feature wiring, crypto RNG usage, Blackjack actions, enhanced Roulette/Slots rules, Trivia categories, and progression features.
+`npm test` verifies important architecture and feature contracts, including:
+
+- exactly one module entry script
+- required source modules
+- backward-compatible save keys
+- Web Crypto RNG
+- Blackjack rule support
+- Roulette and Slots contracts
+- 200 unique Trivia questions
+- navigation guards
+- progression services
 
 # Continuous integration
 
-GitHub Actions runs the syntax and smoke-test suite automatically on:
-
-- pushes to `main`
-- pull requests targeting `main`
-
-This helps prevent future feature changes from silently breaking the deployed application.
+GitHub Actions automatically runs syntax and smoke tests on pushes and pull requests targeting `main`.
 
 # Hosting
 
-NEON VAULT is deployed through GitHub Pages from the `main` branch.
-
-Live site:
+NEON VAULT is deployed from `main` through GitHub Pages.
 
 https://dokeefe414.github.io/Neon-Vault/
-
-# Design notes
-
-The project intentionally remains **framework-free** to demonstrate browser-native JavaScript, DOM rendering, persistent local state, game-state design, transaction accounting, analytics, and responsive UI engineering without depending on a frontend framework.
-
-The current version is designed as a static GitHub Pages application. A future account/cloud-save system would require a real backend or trusted external authentication/persistence service; secrets should never be embedded in client-side code.
 
 ---
 
