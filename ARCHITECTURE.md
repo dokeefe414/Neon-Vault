@@ -1,16 +1,16 @@
-# NEON VAULT Architecture — v3
+# NEON VAULT Architecture — v4
 
-NEON VAULT is a framework-free browser application built with native HTML, CSS, ES modules, `localStorage`, SVG, Web Audio, and the Web Crypto API.
+NEON VAULT is a framework-free browser application built with native HTML, CSS, ES modules, `localStorage`, `sessionStorage`, SVG, Web Audio, Service Workers, and the Web Crypto API.
 
-The v3 refactor removes the old script-override architecture. The browser now loads **one JavaScript entry point**:
+The browser loads one JavaScript composition root:
 
 ```html
 <script type="module" src="src/app.js"></script>
 ```
 
-Every subsystem is imported explicitly from the `src/` tree. No game depends on another file redefining global functions after load.
+Every subsystem is imported explicitly. No game relies on global function replacement or script-order overrides.
 
-## Source tree
+## Runtime layers
 
 ```text
 src/
@@ -28,244 +28,216 @@ src/
 │   ├── slots.js
 │   └── trivia.js
 ├── progression/
-│   └── progression.js
+│   ├── progression.js
+│   └── session.js
 └── ui/
     ├── common.js
     └── views.js
 ```
 
-## Application entry point
+## Composition and routing
 
-`src/app.js` is the composition root.
+`src/app.js` is the composition root. It:
 
-Responsibilities:
-- imports each game module
-- owns current navigation state
-- maps routes/views to render functions
-- guards active Blackjack hands and uncashed Trivia pots
+- imports and registers each game explicitly
+- owns current view state
+- renders desktop and mobile navigation targets
+- provides mobile Games and Progress hubs
+- protects active Blackjack hands and uncashed Trivia pots during navigation
 - applies preferences
-- initializes achievements and daily challenges
-- provides a render error boundary
+- initializes progression
+- exposes a render error boundary
+- registers the service worker
 
-The game registry is explicit rather than dynamically discovered.
+## Persistent state and migrations
 
-## Core layer
+`src/core/store.js` owns wallet accounting and persistent state.
 
-### `src/core/store.js`
-
-Owns all persistent application state and all wallet mutations.
-
-Core save key:
+The existing keys remain intentionally unchanged:
 
 ```text
 neon-vault-save-v1
-```
-
-Stores:
-- balance in integer cents
-- timestamped P/L ledger
-- detailed settlement history
-
-Progression save key:
-
-```text
 neon-vault-meta-v2
 ```
 
-Stores:
-- XP
-- achievement unlocks
+The payloads now carry:
+
+```text
+saveVersion: 4
+```
+
+`migrateState()` and `migrateMeta()` normalize older saves into the current representation without intentionally resetting existing balances or history.
+
+Core state stores:
+
+- balance as integer cents
+- P/L ledger
+- settlement history
+
+Metadata stores:
+
+- XP and levels
+- achievement unlocks and flags
 - daily challenge state
-- gameplay achievement flags
-- sound/reduced-motion/theme settings
-- Trivia category and seen pools
+- preferences and theme
+- Trivia no-repeat pools
 - Slots free-spin state
+- completed session summaries
 
-The keys intentionally remain unchanged so users upgrading from the older build keep their balance and history.
+All wallet-changing gameplay uses centralized `debit()`, `settle()`, or `grant()` services.
 
-All game payouts use the same `debit()` and `settle()` service. Games cannot independently manipulate transaction-history accounting.
+## Randomness
 
-### `src/core/random.js`
+`src/core/random.js` uses `crypto.getRandomValues()` with rejection sampling for production outcomes and Fisher-Yates for shuffling.
 
-Owns random number generation and shuffling.
+Tests can inject a deterministic source through:
 
-Outcomes use `crypto.getRandomValues()` with rejection sampling. `Math.random()` is not used for game outcomes.
+```js
+setRandomSourceForTests(...)
+resetRandomSource()
+```
 
-### `src/core/utils.js`
+This allows exact game scenarios to be reproduced without weakening production randomness.
 
-Contains small dependency-free helpers such as:
-- currency formatting
-- DOM lookup
-- HTML escaping
-- date keys
-- shared constants
+## Blackjack state machine
 
-## Game modules
+`src/games/blackjack.js` owns the complete Blackjack round lifecycle:
 
-Each game owns only its temporary round/session state and rules.
-
-### Blackjack
-
-`src/games/blackjack.js` is a single Blackjack state machine. It replaces the previous three-file override chain.
-
-Supports:
 - six-deck shoe
 - Hit / Stand
 - Double Down
-- one Split maximum
-- split aces receiving one card each
+- Split
 - Insurance
 - late Surrender
-- natural Blackjack at 3:2
+- natural Blackjack 3:2
 - dealer stands on 17
 - Perfect Pairs
 - 21+3
-- explicit forfeit settlement when leaving an active hand
+- explicit forfeit settlement on confirmed navigation
 
-Rendering a hand is side-effect free: UI rendering does not advance game state.
+Active rounds are additionally serialized under:
+
+```text
+neon-vault-blackjack-round-v1
+```
+
+A page reload restores the cards, shoe, wager amounts, active hand, insurance state, and split/double state without debiting the wager again. The active-round key is cleared when the round settles, is surrendered, or is deliberately forfeited.
+
+## Other games
 
 ### Roulette
 
-`src/games/roulette.js` supports European single-zero Roulette:
-- straight-up numbers
-- red / black
-- odd / even
-- low / high
-- dozens
-- columns
+European single-zero Roulette supports straight-up numbers, colors, parity, low/high, dozens, and columns. Wallet settlement happens before result animation so a refresh cannot strand a wager.
 
-The financial settlement occurs before presentation animation begins. This prevents a refresh/navigation during animation from losing a paid result.
+### Neon Reels
 
-### Slots
-
-`src/games/slots.js` owns:
-- five reels × three rows
-- seven paylines
-- weighted symbols
-- wilds
-- scatters
-- persistent free spins
-- triggering-wager preservation
-
-Free-spin count and triggering wager are stored in progression metadata so navigating away does not alter the bonus value.
+Slots owns the 5×3 grid, seven paylines, symbol weights, wilds, scatters, and free-spin logic. Free-spin count and triggering wager persist in metadata.
 
 ### Dice
 
-`src/games/dice.js` contains the complete two-dice high/low game and has no persistent round state.
+Dice is a stateless two-dice high/low game. Seven loses; correct predictions pay 1:1.
 
 ### Trivia Rescue
 
-Question data lives separately in `src/data/trivia.js`.
+Trivia data is isolated in `src/data/trivia.js`. The game module owns category selection, escalating difficulty, pot/streak state, cash-out rules, and persistent category/difficulty no-repeat buckets. The active bank contains exactly 200 unique prompts.
 
-`src/games/trivia.js` owns:
-- category selection
-- streak and pot state
-- difficulty progression
-- persistent no-repeat tracking
-- cash-out logic
-- $0-bankroll recovery tracking
+## Progression and sessions
 
-The active bank contains exactly 200 unique prompts.
+`src/progression/progression.js` subscribes to settlement events and derives XP, levels, titles, achievements, daily challenges, bankroll history, per-game statistics, and win streaks.
 
-## Progression layer
+`src/progression/session.js` uses `sessionStorage` for the current browser session and stores completed summaries in metadata. It tracks starting balance, session P/L, settled result count, duration, biggest win, and biggest loss.
 
-`src/progression/progression.js` subscribes to store settlement events rather than overriding the settlement function.
+## UI and theme system
 
-It derives and manages:
-- XP and levels
-- titles
-- achievements
-- daily challenges
-- per-game statistics
-- win streaks
-- bankroll-history reconstruction
+`src/ui/common.js` owns shared wallet rendering, toast feedback, generated tones, wager parsing, wager-adjustment controls, and preference application.
 
-Derived statistics are calculated from settlement history instead of duplicated into persistent state.
+The visual layer is split across base and enhancement stylesheets. v4 introduces semantic theme tokens such as:
 
-## UI layer
+```text
+--nv-bg
+--nv-sidebar
+--nv-panel
+--nv-border
+--nv-input
+--nv-nav-active
+--nv-felt-a
+--nv-felt-b
+--nv-card-back-a
+```
 
-### `src/ui/common.js`
+Midnight Purple and High Roller Gold override these tokens so they restyle the entire interface rather than only changing accent colors.
 
-Shared interaction helpers:
-- wallet rendering
-- toast/status feedback
-- generated sound effects
-- wager parsing
-- half/double wager controls
-- theme/reduced-motion application
+## Mobile architecture
 
-### `src/ui/views.js`
+Desktop retains the full sidebar. At phone widths, `mobile.css` replaces it with a five-item bottom dock:
 
-Owns non-game screens:
-- Dashboard
-- Activity
-- Player Profile
-- Achievements
-- Daily Challenge
-- bankroll SVG chart
-- save export/import
-- settings
+- Home
+- Games
+- Trivia
+- Progress
+- Profile
 
-## Currency and accounting model
+Games and Progress open hub screens that provide access to the routes not represented directly in the dock. This keeps all features reachable without overcrowding the mobile navigation.
 
-All virtual credits are represented as integer cents.
+## PWA and offline behavior
 
-Example:
+`manifest.webmanifest` makes NEON VAULT installable on supported browsers. `sw.js` precaches the static app shell and runtime modules.
+
+The service worker is network-first. On failure it:
+
+1. returns the exact cached resource when available;
+2. falls back to `index.html` only for navigation requests;
+3. returns an error for an uncached failed asset request rather than incorrectly serving HTML as JavaScript or CSS.
+
+## Currency and accounting
+
+All virtual credits are represented as integer cents:
 
 ```text
 $25.00 = 2500
 ```
 
-A wager is first debited from the wallet. Settlement then credits the payout and writes one immutable history record:
+A paid wager is debited before settlement. Settlement credits the payout and records:
 
 ```text
 net = payout - wager
 ```
 
-This keeps the wallet, activity ledger, analytics, and exported saves aligned.
+This keeps the wallet, Activity history, analytics, session reporting, and exported saves aligned.
 
-NEON VAULT is strictly a virtual-credit simulation. Credits have no monetary value and cannot be purchased, deposited, withdrawn, transferred, or redeemed.
+NEON VAULT is strictly a virtual-credit simulation. Credits cannot be purchased, deposited, withdrawn, transferred, or redeemed.
 
-## Save portability
+## Reliability and quality pipeline
 
-The Profile screen can export a versioned JSON backup containing both save objects. Import validates wallet/history structure before replacing local progress.
-
-## Reliability rules introduced by the refactor
-
-- one ES-module entry point
-- no global function overrides
-- one centralized transaction service
-- explicit game registry
-- explicit navigation lifecycle
-- active-hand/pot navigation guards
-- settlement before asynchronous animation
-- view-aware animation completion
-- persistent bonus state
-- browser error boundary
-- backward-compatible save keys
-
-## Quality checks
+The v4 pipeline includes:
 
 ```bash
 npm run check
+npm run lint
 npm test
+npm run test:e2e
+npm audit --audit-level=high
 ```
 
-`npm run check` syntax-checks every JavaScript module under `src/`.
+Coverage includes:
 
-`npm test` verifies architectural contracts including:
-- one-script module runtime
-- required module files
-- legacy save-key compatibility
-- Web Crypto RNG
-- Blackjack feature/rule presence
-- Roulette and Slots feature contracts
-- Trivia bank size and unique prompts
+- module/file contracts
+- v4 save migrations
+- backward-compatible storage keys
+- production Web Crypto RNG
+- deterministic RNG injection
+- deterministic Blackjack/Roulette rule tests
+- 200 unique Trivia prompts
 - navigation guards
-- progression services
+- Midnight Purple theme switching and persistence
+- wallet persistence
+- Blackjack round reload recovery without double debit
+- PWA assets
+- desktop Chromium flows
+- mobile touch/navigation flows
 
-GitHub Actions runs both commands on pushes and pull requests to `main`.
+GitHub Actions runs the pipeline on pushes and pull requests to `main`. Playwright failure reports, screenshots, videos, and traces are uploaded as artifacts. Dependabot checks npm dependencies weekly.
 
 ## Backend boundary
 
-The current GitHub Pages release is entirely client-side and intentionally contains no account credentials or private server secrets. A future cloud-account implementation should place authentication and persistent server data behind a real backend/API rather than embedding credentials in browser code.
+The GitHub Pages build remains intentionally client-side. It contains no account passwords, private API credentials, or server secrets. Future cloud accounts should use a real authentication/data backend rather than embedding privileged credentials in browser code.
