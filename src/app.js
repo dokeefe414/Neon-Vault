@@ -1,5 +1,5 @@
 import {$} from './core/utils.js';
-import {subscribe,getMeta} from './core/store.js';
+import {subscribe} from './core/store.js';
 import {applyPreferences,renderWallet,toast} from './ui/common.js';
 import {checkAchievements,dailyChallenge} from './progression/progression.js';
 import {currentSession} from './progression/session.js';
