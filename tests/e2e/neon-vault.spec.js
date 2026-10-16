@@ -2,14 +2,16 @@ import {test,expect} from '@playwright/test';
 
 const SAVE_KEY='neon-vault-save-v1';
 const META_KEY='neon-vault-meta-v2';
+const BLACKJACK_KEY='neon-vault-blackjack-round-v1';
 
 async function bootClean(page){
   await page.goto('/');
-  await page.evaluate(({SAVE_KEY,META_KEY})=>{
+  await page.evaluate(({SAVE_KEY,META_KEY,BLACKJACK_KEY})=>{
     localStorage.removeItem(SAVE_KEY);
     localStorage.removeItem(META_KEY);
+    localStorage.removeItem(BLACKJACK_KEY);
     sessionStorage.clear();
-  },{SAVE_KEY,META_KEY});
+  },{SAVE_KEY,META_KEY,BLACKJACK_KEY});
   await page.reload();
 }
 
@@ -103,6 +105,27 @@ test('blackjack can deal and finish a hand',async({page})=>{
   }
   const state=await persistedState(page);
   expect(state.history.some(x=>/^Blackjack(?: · Hand \d+)?$/.test(x.game))).toBeTruthy();
+});
+
+test('active Blackjack round survives reload without a second debit',async({page})=>{
+  await bootClean(page);
+  await nav(page,'blackjack');
+  await page.locator('#bet').fill('10');
+  await page.locator('#play').click();
+  const insurance=page.locator('#declineInsurance');
+  if(await insurance.isVisible().catch(()=>false))await insurance.click();
+  const active=await page.locator('#actions button').count()>0;
+  if(!active)test.skip(true,'Random initial Blackjack settled immediately');
+  const before=await persistedState(page);
+  const stored=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),BLACKJACK_KEY);
+  expect(stored?.hands?.length).toBeGreaterThan(0);
+  await page.reload();
+  await nav(page,'blackjack');
+  await expect(page.locator('#message')).toContainText('Restored active hand');
+  const after=await persistedState(page);
+  expect(after.balance).toBe(before.balance);
+  const stand=page.locator('#stand');
+  if(await stand.isVisible().catch(()=>false))await stand.click();
 });
 
 test('trivia category selection persists and questions render',async({page})=>{
