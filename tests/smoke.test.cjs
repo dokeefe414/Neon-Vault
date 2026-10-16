@@ -9,7 +9,7 @@ const root=path.resolve(__dirname,'..');
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 
 const required=[
-  'index.html','style.css','creator.css','pro.css','mobile.css','README.md','ARCHITECTURE.md',
+  'index.html','style.css','creator.css','pro.css','game-polish.css','mobile.css','README.md','CHANGELOG.md','ARCHITECTURE.md',
   'manifest.webmanifest','sw.js','icon.svg','eslint.config.js','prettier.config.js',
   'src/app.js','src/core/utils.js','src/core/random.js','src/core/store.js',
   'src/ui/common.js','src/ui/views.js','src/progression/progression.js','src/progression/session.js','src/data/trivia.js',
@@ -25,6 +25,7 @@ assert.ok(index.includes('VIRTUAL CREDITS ONLY'),'Virtual-credit disclaimer must
 assert.ok(index.includes('Created by Daniel O\'Keefe'),'Creator credit is missing');
 assert.ok(index.includes('manifest.webmanifest'),'PWA manifest must be linked');
 assert.ok(index.includes('mobile-dock'),'Mobile navigation dock is missing');
+assert.ok(index.includes('game-polish.css'),'Final game polish stylesheet must be loaded');
 
 const store=read('src/core/store.js');
 assert.ok(store.includes("STATE_KEY='neon-vault-save-v1'"),'Legacy wallet/history save key must stay compatible');
@@ -43,6 +44,9 @@ const blackjack=read('src/games/blackjack.js');
 ['DOUBLE DOWN','SPLIT','SURRENDER','TAKE INSURANCE','Perfect Pairs','21+3'].forEach(term=>assert.ok(blackjack.includes(term),`Blackjack rule missing: ${term}`));
 assert.ok(blackjack.includes('while(handTotal(r.dealer)<17)'),'Dealer must play out hands to 17');
 assert.ok(blackjack.includes('abandon()'),'Blackjack must support explicit forfeit settlement on navigation');
+assert.ok(blackjack.includes("ACTIVE_KEY='neon-vault-blackjack-round-v1'"),'Active Blackjack persistence key is missing');
+assert.ok(blackjack.includes('persistRound()'),'Blackjack round persistence service is missing');
+assert.ok(blackjack.includes('loadRound()'),'Blackjack reload recovery is missing');
 
 const roulette=read('src/games/roulette.js');
 ['dozen1','column1','mult:36','roulette-straight-win'].forEach(term=>assert.ok(roulette.includes(term),`Roulette feature missing: ${term}`));
@@ -70,9 +74,14 @@ assert.ok(proCss.includes('body.theme-purple'),'Midnight Purple theme rules are 
 assert.ok(proCss.includes('--nv-bg:#090514'),'Midnight Purple must change core background tokens');
 assert.ok(proCss.includes('body.theme-gold'),'High Roller Gold theme rules are missing');
 
+const gamePolish=read('game-polish.css');
+assert.ok(gamePolish.includes('.blackjack-hand.active'),'Active Blackjack hand styling is missing');
+
 const serviceWorker=read('sw.js');
 assert.ok(serviceWorker.includes("const CACHE='neon-vault-v4'"),'v4 service-worker cache is missing');
 assert.ok(serviceWorker.includes("'./src/app.js'"),'Service worker must cache the app entry point');
+assert.ok(serviceWorker.includes("'./game-polish.css'"),'Service worker must cache final game polish');
+assert.ok(serviceWorker.includes("event.request.mode==='navigate'"),'Offline navigation fallback must be request-type aware');
 
 (async()=>{
   const moduleUrl=pathToFileURL(path.join(root,'src/data/trivia.js')).href;
