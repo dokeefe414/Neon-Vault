@@ -1,0 +1,23 @@
+.blackjack-hand{
+  padding:14px;
+  border:1px solid var(--nv-felt-border);
+  border-radius:16px;
+  background:color-mix(in srgb,var(--nv-felt-b) 82%,transparent);
+  transition:border-color .2s ease,background .2s ease,box-shadow .2s ease,transform .2s ease;
+}
+.blackjack-hand.active{
+  border-color:var(--mint);
+  background:color-mix(in srgb,var(--nv-felt-a) 58%,transparent);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--mint) 15%,transparent),0 0 28px color-mix(in srgb,var(--mint) 12%,transparent);
+  transform:translateY(-1px);
+}
+.blackjack-hand .hand{min-height:84px}
+.game-panel>.pill{box-shadow:0 0 18px color-mix(in srgb,var(--mint) 8%,transparent)}
+.result{letter-spacing:.1px}
+.history-table tbody tr{transition:background .15s ease}
+.history-table tbody tr:hover{background:color-mix(in srgb,var(--mint) 4%,transparent)}
+@media(max-width:570px){
+  .blackjack-hand{padding:11px}
+  .blackjack-hand .hand{min-height:72px}
+  .playing-card{min-width:50px;height:73px;font-size:22px}
+}
