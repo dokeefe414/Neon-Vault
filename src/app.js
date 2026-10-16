@@ -22,6 +22,11 @@ function setActiveNav(next){
   });
 }
 
+function resetMainScroll(){
+  const main=$('mainContent');
+  if(main)main.scrollTop=0;
+}
+
 function canLeaveCurrent(next){
   if(next===view)return false;
   if(view==='blackjack'&&blackjackGame.hasActiveRound()){
@@ -39,13 +44,13 @@ function wireHubButtons(){document.querySelectorAll('[data-hub-go]').forEach(but
 
 function renderGamesHub(){
   renderWallet();
-  $('content').innerHTML=`<div class="section-head"><div><div class="pro-kicker">CASINO FLOOR</div><h2 style="margin-top:6px">Choose a game</h2></div><span class="pill">VIRTUAL CREDITS ONLY</span></div><div class="games"><article class="card"><span class="symbol accent">♠</span><h3>Blackjack</h3><p>Full table rules, split, double down, insurance, surrender, and side bets.</p><button data-hub-go="blackjack">PLAY BLACKJACK →</button></article><article class="card"><span class="symbol accent">◉</span><h3>Roulette</h3><p>European single-zero wheel with number, color, dozen, and column bets.</p><button data-hub-go="roulette">SPIN ROULETTE →</button></article><article class="card"><span class="symbol accent">✦</span><h3>Neon Reels</h3><p>Five reels, seven paylines, wilds, scatters, and persistent free spins.</p><button data-hub-go="slots">SPIN SLOTS →</button></article><article class="card"><span class="symbol accent">⚄</span><h3>Dice</h3><p>Pick high or low, roll two dice, and try to beat the seven.</p><button data-hub-go="dice">ROLL DICE →</button></article></div>`;
+  $('content').innerHTML=`<div class="section-head"><div><div class="pro-kicker">CASINO FLOOR</div><h2 style="margin-top:6px">Choose a game</h2></div><span class="pill">VIRTUAL CREDITS ONLY</span></div><div class="games hub-grid"><article class="card hub-card"><span class="symbol accent">♠</span><h3>Blackjack</h3><p>Full table rules, split, double down, insurance, surrender, and side bets.</p><button data-hub-go="blackjack">PLAY BLACKJACK →</button></article><article class="card hub-card"><span class="symbol accent">◉</span><h3>Roulette</h3><p>European single-zero wheel with number, color, dozen, and column bets.</p><button data-hub-go="roulette">SPIN ROULETTE →</button></article><article class="card hub-card"><span class="symbol accent">✦</span><h3>Neon Reels</h3><p>Five reels, seven paylines, wilds, scatters, and persistent free spins.</p><button data-hub-go="slots">SPIN SLOTS →</button></article><article class="card hub-card"><span class="symbol accent">⚄</span><h3>Dice</h3><p>Pick high or low, roll two dice, and try to beat the seven.</p><button data-hub-go="dice">ROLL DICE →</button></article></div>`;
   wireHubButtons();
 }
 
 function renderProgressHub(){
   renderWallet();
-  $('content').innerHTML=`<div class="section-head"><div><div class="pro-kicker">YOUR PROGRESS</div><h2 style="margin-top:6px">Stats, goals, and history</h2></div></div><div class="games"><article class="card"><span class="symbol accent">★</span><h3>Achievements</h3><p>Track milestones, unlock badges, and earn bonus XP.</p><button data-hub-go="achievements">VIEW ACHIEVEMENTS →</button></article><article class="card"><span class="symbol accent">✓</span><h3>Daily Challenge</h3><p>Complete today’s objective for virtual credits and XP.</p><button data-hub-go="challenges">VIEW CHALLENGE →</button></article><article class="card"><span class="symbol accent">◷</span><h3>Activity</h3><p>Review wagers, payouts, and net results from your local history.</p><button data-hub-go="history">VIEW ACTIVITY →</button></article></div>`;
+  $('content').innerHTML=`<div class="section-head"><div><div class="pro-kicker">YOUR PROGRESS</div><h2 style="margin-top:6px">Stats, goals, and history</h2></div></div><div class="games hub-grid"><article class="card hub-card"><span class="symbol accent">★</span><h3>Achievements</h3><p>Track milestones, unlock badges, and earn bonus XP.</p><button data-hub-go="achievements">VIEW ACHIEVEMENTS →</button></article><article class="card hub-card"><span class="symbol accent">✓</span><h3>Daily Challenge</h3><p>Complete today’s objective for virtual credits and XP.</p><button data-hub-go="challenges">VIEW CHALLENGE →</button></article><article class="card hub-card"><span class="symbol accent">◷</span><h3>Activity</h3><p>Review wagers, payouts, and net results from your local history.</p><button data-hub-go="history">VIEW ACTIVITY →</button></article></div>`;
   wireHubButtons();
 }
 
@@ -62,7 +67,9 @@ export function navigate(next,{force=false}={}){
   view=next;
   setActiveNav(view);
   $('pageTitle').textContent=titles[view];
+  resetMainScroll();
   renderCurrent();
+  resetMainScroll();
 }
 
 function renderCurrent(){
