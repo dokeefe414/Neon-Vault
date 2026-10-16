@@ -1,21 +1,24 @@
 {
-  "name": "neon-vault",
-  "version": "3.1.0",
-  "private": true,
-  "type": "module",
-  "description": "A modular virtual-credit casino and progression game built with vanilla HTML, CSS, and JavaScript.",
-  "scripts": {
-    "check": "find src -name '*.js' -print0 | xargs -0 -n1 node --check",
-    "test": "node tests/smoke.test.cjs",
-    "test:e2e": "playwright test",
-    "test:e2e:desktop": "playwright test --project=desktop-chromium",
-    "test:e2e:mobile": "playwright test --project=mobile-chromium",
-    "test:all": "npm run check && npm test && npm run test:e2e"
+  "name":"neon-vault",
+  "version":"4.0.0",
+  "private":true,
+  "type":"module",
+  "description":"A modular virtual-credit casino and progression game built with vanilla HTML, CSS, and JavaScript.",
+  "scripts":{
+    "check":"find src -name '*.js' -print0 | xargs -0 -n1 node --check && node --check sw.js && node --check playwright.config.js",
+    "lint":"eslint src tests playwright.config.js sw.js",
+    "format":"prettier --write . --ignore-path .gitignore",
+    "format:check":"prettier --check src tests playwright.config.js sw.js",
+    "test":"node tests/smoke.test.cjs && node --test tests/rules.test.mjs",
+    "test:e2e":"playwright test",
+    "test:e2e:desktop":"playwright test --project=desktop-chromium",
+    "test:e2e:mobile":"playwright test --project=mobile-chromium",
+    "test:all":"npm run check && npm run lint && npm test && npm run test:e2e"
   },
-  "devDependencies": {
-    "@playwright/test": "^1.55.0"
+  "devDependencies":{
+    "@playwright/test":"^1.55.0",
+    "eslint":"^9.38.0",
+    "prettier":"^3.6.2"
   },
-  "engines": {
-    "node": ">=20"
-  }
+  "engines":{"node":">=20"}
 }
