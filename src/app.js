@@ -1,7 +1,8 @@
 import {$} from './core/utils.js';
-import {subscribe} from './core/store.js';
+import {subscribe,getMeta} from './core/store.js';
 import {applyPreferences,renderWallet,toast} from './ui/common.js';
 import {checkAchievements,dailyChallenge} from './progression/progression.js';
+import {currentSession} from './progression/session.js';
 import {renderHome,renderActivity,renderProfile,renderAchievements,renderChallenges} from './ui/views.js';
 import {blackjackGame} from './games/blackjack.js';
 import {rouletteGame} from './games/roulette.js';
@@ -14,7 +15,7 @@ const titles={home:'The Vault',blackjack:'Blackjack',roulette:'Roulette',slots:'
 let view='home';
 
 function setActiveNav(next){
-  document.querySelectorAll('.nav').forEach(button=>button.classList.toggle('active',button.dataset.view===next));
+  document.querySelectorAll('.nav,.dock-nav').forEach(button=>button.classList.toggle('active',button.dataset.view===next));
 }
 
 function canLeaveCurrent(next){
@@ -28,6 +29,14 @@ function canLeaveCurrent(next){
     triviaGame.abandon();
   }
   return true;
+}
+
+function appendSessionCard(){
+  if(view!=='profile')return;
+  const host=$('content');if(!host)return;
+  const s=currentSession();
+  const minutes=Math.floor(s.durationMs/60000);
+  host.insertAdjacentHTML('beforeend',`<div class="pro-panel session-panel" style="margin-top:18px"><div class="section-head"><div><div class="pro-kicker">CURRENT SESSION</div><h3 style="margin-top:6px">Live session analytics</h3></div><span class="pill">${minutes} MIN</span></div><div class="pro-grid"><div><div class="pro-kicker">SESSION P/L</div><div class="pro-value ${s.net>=0?'positive':'negative'}">${(s.net/100).toLocaleString('en-US',{style:'currency',currency:'USD'})}</div></div><div><div class="pro-kicker">RESULTS</div><div class="pro-value">${s.settled}</div></div><div><div class="pro-kicker">BIGGEST WIN</div><div class="pro-value positive">${(s.biggestWin/100).toLocaleString('en-US',{style:'currency',currency:'USD'})}</div></div></div></div>`);
 }
 
 export function navigate(next,{force=false}={}){
@@ -45,7 +54,7 @@ function renderCurrent(){
   try{
     if(view==='home')return renderHome(navigate);
     if(view==='history')return renderActivity();
-    if(view==='profile')return renderProfile();
+    if(view==='profile'){renderProfile();appendSessionCard();return;}
     if(view==='achievements')return renderAchievements();
     if(view==='challenges')return renderChallenges();
     return games[view].render();
@@ -57,7 +66,7 @@ function renderCurrent(){
   }
 }
 
-document.querySelectorAll('.nav').forEach(button=>button.addEventListener('click',()=>navigate(button.dataset.view)));
+document.querySelectorAll('.nav,.dock-nav').forEach(button=>button.addEventListener('click',()=>navigate(button.dataset.view)));
 
 subscribe(({type})=>{
   if(type==='save-replaced')renderCurrent();
@@ -67,7 +76,18 @@ subscribe(({type})=>{
 window.addEventListener('error',event=>console.error('NEON VAULT runtime error',event.error||event.message));
 window.addEventListener('unhandledrejection',event=>console.error('NEON VAULT promise rejection',event.reason));
 
+if('serviceWorker'in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(error=>console.warn('Service worker registration skipped',error)));
+}
+
+function updateThemeColor(){
+  const theme=getMeta().theme;
+  const colors={mint:'#090c1b',purple:'#090514',gold:'#0e0a05'};
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content',colors[theme]||colors.mint);
+}
+
 applyPreferences();
+updateThemeColor();
 dailyChallenge();
 checkAchievements();
 navigate('home',{force:true});
