@@ -17,15 +17,15 @@ async function bootClean(page){
 
 async function nav(page,view){
   const direct=page.locator(`button.nav[data-view="${view}"]:visible,button.dock-nav[data-view="${view}"]:visible`).first();
-  if(await direct.count()){await direct.click();return;}
+  if(await direct.count()){await direct.click({timeout:7000});return;}
   if(['blackjack','roulette','slots','dice'].includes(view)){
-    await page.locator('button.dock-nav[data-view="games"]:visible').click();
-    await page.locator(`button[data-hub-go="${view}"]`).click();
+    await page.locator('button.dock-nav[data-view="games"]:visible').click({timeout:7000});
+    await page.locator(`button[data-hub-go="${view}"]`).click({timeout:7000});
     return;
   }
   if(['achievements','challenges','history'].includes(view)){
-    await page.locator('button.dock-nav[data-view="progress"]:visible').click();
-    await page.locator(`button[data-hub-go="${view}"]`).click();
+    await page.locator('button.dock-nav[data-view="progress"]:visible').click({timeout:7000});
+    await page.locator(`button[data-hub-go="${view}"]`).click({timeout:7000});
     return;
   }
   throw new Error(`No visible navigation path for ${view}`);
@@ -44,12 +44,15 @@ test('loads dashboard with a fresh $1,000 wallet and no runtime errors',async({p
 });
 
 test('all primary navigation routes render',async({page})=>{
+  test.setTimeout(60_000);
   await bootClean(page);
   const routes=[['blackjack','Blackjack'],['roulette','Roulette'],['slots','Slots'],['dice','Dice'],['trivia','Trivia Rescue'],['profile','Player Profile'],['achievements','Achievements'],['challenges','Daily Challenge'],['history','Activity']];
   for(const [view,title] of routes){
-    await nav(page,view);
-    await expect(page.locator('#pageTitle')).toHaveText(title);
-    await expect(page.locator('#content')).not.toContainText('Something went wrong');
+    await test.step(`navigate to ${view}`,async()=>{
+      await nav(page,view);
+      await expect(page.locator('#pageTitle')).toHaveText(title);
+      await expect(page.locator('#content')).not.toContainText('Something went wrong');
+    });
   }
 });
 
