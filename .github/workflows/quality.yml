@@ -19,7 +19,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install dependencies
         run: npm install
@@ -27,8 +27,14 @@ jobs:
       - name: Check JavaScript syntax
         run: npm run check
 
-      - name: Run smoke tests
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run smoke and deterministic rule tests
         run: npm test
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
 
       - name: Install Chromium for Playwright
         run: npx playwright install --with-deps chromium
