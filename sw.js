@@ -1,6 +1,6 @@
 const CACHE='neon-vault-v4';
 const CORE=[
-  './','./index.html','./style.css','./creator.css','./pro.css','./mobile.css','./icon.svg','./manifest.webmanifest',
+  './','./index.html','./style.css','./creator.css','./pro.css','./game-polish.css','./mobile.css','./icon.svg','./manifest.webmanifest',
   './src/app.js','./src/core/utils.js','./src/core/random.js','./src/core/store.js',
   './src/ui/common.js','./src/ui/views.js','./src/progression/progression.js','./src/progression/session.js',
   './src/data/trivia.js','./src/games/blackjack.js','./src/games/roulette.js','./src/games/slots.js','./src/games/dice.js','./src/games/trivia.js'
@@ -20,5 +20,10 @@ self.addEventListener('fetch',event=>{
     const copy=response.clone();
     caches.open(CACHE).then(cache=>cache.put(event.request,copy));
     return response;
-  }).catch(()=>caches.match(event.request).then(hit=>hit||caches.match('./index.html'))));
+  }).catch(async()=>{
+    const hit=await caches.match(event.request);
+    if(hit)return hit;
+    if(event.request.mode==='navigate')return caches.match('./index.html');
+    return Response.error();
+  }));
 });
