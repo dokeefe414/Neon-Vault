@@ -1,17 +1,41 @@
 .mobile-dock{display:none}
 @media(max-width:570px){
-  .shell{position:relative;isolation:isolate;z-index:0}
+  html,body{height:100%;overflow:hidden}
+  .shell{
+    position:relative;
+    isolation:isolate;
+    z-index:0;
+    display:grid!important;
+    grid-template-rows:minmax(0,1fr) auto;
+    grid-template-columns:1fr;
+    height:100dvh;
+    min-height:0;
+    overflow:hidden
+  }
   .sidebar{display:none!important}
+  main{
+    grid-row:1;
+    grid-column:1;
+    min-height:0;
+    overflow-y:auto;
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:28px!important;
+    z-index:1
+  }
   .shell>.mobile-dock{
-    position:fixed;
-    left:10px;
-    right:10px;
-    bottom:max(10px,env(safe-area-inset-bottom));
-    z-index:9999;
+    grid-row:2;
+    grid-column:1;
+    position:relative;
+    left:auto;
+    right:auto;
+    bottom:auto;
+    z-index:2;
     pointer-events:auto;
     display:grid;
     grid-template-columns:repeat(5,1fr);
     gap:4px;
+    margin:0 10px max(10px,env(safe-area-inset-bottom));
     padding:7px;
     border:1px solid var(--nv-border);
     border-radius:20px;
@@ -19,11 +43,9 @@
     box-shadow:0 18px 50px #0009,0 0 0 1px color-mix(in srgb,var(--mint) 5%,transparent);
     backdrop-filter:blur(20px)
   }
-  .sidebar,main{z-index:1}
-  .dock-nav{position:relative;z-index:10000;pointer-events:auto;border:0;background:transparent;color:var(--muted);border-radius:14px;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-weight:800;touch-action:manipulation}
+  .dock-nav{position:relative;z-index:1;pointer-events:auto;border:0;background:transparent;color:var(--muted);border-radius:14px;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-weight:800;touch-action:manipulation}
   .dock-nav span{font-size:20px;line-height:1}.dock-nav small{font-size:9px;letter-spacing:.3px}
   .dock-nav.active{background:var(--nv-nav-active);color:var(--mint);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--mint) 20%,transparent)}
-  main{padding-bottom:120px!important}
   #content{padding-bottom:18px}
   header{gap:10px}.wallet{min-width:132px}.wallet strong{font-size:18px}
 }
