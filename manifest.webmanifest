@@ -1,0 +1,14 @@
+{
+  "name":"NEON VAULT",
+  "short_name":"NEON VAULT",
+  "description":"A virtual-credit casino and progression game with Blackjack, Roulette, Slots, Dice, and Trivia Rescue.",
+  "start_url":"./",
+  "scope":"./",
+  "display":"standalone",
+  "background_color":"#090c1b",
+  "theme_color":"#54f0c1",
+  "orientation":"portrait-primary",
+  "icons":[
+    {"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
