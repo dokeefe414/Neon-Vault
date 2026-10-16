@@ -10,24 +10,41 @@ NEON VAULT is a polished browser-based virtual casino and progression game built
 
 https://dokeefe414.github.io/Neon-Vault/
 
-## v3 refactor
+## v4 visual systems & reliability
 
-The v3 release completely reorganized the JavaScript architecture.
+The v4 release focuses on visual identity, mobile usability, offline support, and engineering reliability.
 
-The previous implementation grew through multiple files that progressively overrode global functions. That approach worked, but it made behavior depend on script load order and made future changes harder to reason about.
+Highlights:
 
-The current build now uses:
+- Midnight Purple and High Roller Gold now restyle the **entire interface**, not just accent colors
+- token-based theme system for backgrounds, panels, navigation, inputs, cards, tables, charts, shadows, Blackjack felt, and card backs
+- dedicated mobile bottom navigation
+- mobile **Games** and **Progress** hubs so every major feature stays reachable on small screens
+- installable PWA manifest and app icon
+- offline service-worker cache
+- versioned v4 save migrations while preserving the existing localStorage keys
+- current-session analytics on the Profile page
+- deterministic RNG injection for exact automated rule tests
+- ESLint and Prettier tooling
+- dependency auditing in GitHub Actions
+- expanded Playwright tests for themes, PWA assets, mobile navigation, and v4 saves
+- accessibility improvements including a skip link, focus-visible styling, landmarks, and 44px+ mobile controls
+
+See [`CHANGELOG.md`](CHANGELOG.md) for release history and [`ARCHITECTURE.md`](ARCHITECTURE.md) for the design.
+
+## Modular architecture
+
+The v3 refactor replaced the original global override chain with:
 
 - one ES-module entry point: `src/app.js`
 - explicit imports and exports
 - one centralized wallet/settlement store
 - independent game modules
-- a dedicated progression layer
+- dedicated progression and session layers
 - a dedicated UI/view layer
 - no global function override chain
 - backward-compatible save keys
-- automated modular smoke tests
-- Playwright end-to-end browser tests on desktop and mobile viewports
+- automated static, rule, and browser tests
 
 Existing users keep the same wallet/history because the persistent keys remain:
 
@@ -36,24 +53,25 @@ neon-vault-save-v1
 neon-vault-meta-v2
 ```
 
-See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full design.
-
 # Core features
 
 - Shared starting bankroll of **$1,000 in virtual credits**
 - Persistent local save using `localStorage`
+- Versioned save migrations
 - Rolling profit/loss for 24 hours, 7 days, and 30 days
 - Lifetime bankroll graph
+- Current-session analytics
 - Activity/transaction history
 - Per-game statistics
 - XP, levels, and player titles
 - Achievements
 - Daily challenges
-- Unlockable visual themes
+- Full-interface visual themes
 - Optional generated sound effects
 - Reduced-motion mode
 - Save export/import as JSON
 - Responsive desktop/mobile layout
+- Installable/offline PWA support
 - Web Crypto API randomness
 - GitHub Actions quality checks
 - Automated Chromium browser regression testing
@@ -217,12 +235,15 @@ One challenge is generated from the local calendar date. Completing it awards **
 
 # Analytics
 
-The Dashboard and Profile derive statistics from the settlement history:
+The Dashboard and Profile derive statistics from settlement history:
 
 - current balance
 - rolling 24H / 7D / 30D P/L
 - lifetime net result
-- biggest win/loss
+- current-session P/L
+- current-session result count
+- current-session biggest win
+- biggest lifetime win/loss
 - win rate
 - best win streak
 - favorite game
@@ -233,17 +254,33 @@ The Dashboard and Profile derive statistics from the settlement history:
 
 All virtual currency is stored internally as **integer cents** to avoid floating-point currency errors.
 
-The Profile page can export the complete save as JSON and import it later. Imports validate the wallet/history structure before replacing local progress.
+The save layer now includes `saveVersion: 4` and migration functions for older wallet/progression structures. The public storage keys remain unchanged so older browsers can migrate in place instead of being reset.
+
+The Profile page can export the complete save as JSON and import it later. Imports validate and normalize the wallet/history structure before replacing local progress.
 
 # Randomness
 
-Game outcomes use:
+Production game outcomes use:
 
 ```js
 crypto.getRandomValues(...)
 ```
 
 The project uses rejection sampling and Fisher-Yates shuffling instead of `Math.random()` for game outcomes.
+
+Automated tests can inject a deterministic integer source through `setRandomSourceForTests()` so exact card/wheel scenarios can be reproduced without changing production randomness.
+
+# PWA / offline support
+
+NEON VAULT includes:
+
+- `manifest.webmanifest`
+- `icon.svg`
+- `sw.js`
+- standalone display metadata
+- offline caching for the app shell and game modules
+
+On supported browsers, the site can be installed to the home screen and launched in a standalone window.
 
 # Project structure
 
@@ -253,9 +290,16 @@ Neon-Vault/
 ├── style.css
 ├── creator.css
 ├── pro.css
+├── mobile.css
+├── manifest.webmanifest
+├── icon.svg
+├── sw.js
 ├── package.json
 ├── playwright.config.js
+├── eslint.config.js
+├── prettier.config.js
 ├── README.md
+├── CHANGELOG.md
 ├── ARCHITECTURE.md
 ├── src/
 │   ├── app.js
@@ -272,15 +316,18 @@ Neon-Vault/
 │   │   ├── slots.js
 │   │   └── trivia.js
 │   ├── progression/
-│   │   └── progression.js
+│   │   ├── progression.js
+│   │   └── session.js
 │   └── ui/
 │       ├── common.js
 │       └── views.js
 ├── tests/
 │   ├── smoke.test.cjs
+│   ├── rules.test.mjs
 │   └── e2e/
 │       └── neon-vault.spec.js
 └── .github/
+    ├── dependabot.yml
     └── workflows/
         └── quality.yml
 ```
@@ -289,83 +336,65 @@ Neon-Vault/
 
 Because the app uses browser ES modules, run it through a local static server rather than opening `index.html` directly from `file://`.
 
-For example:
-
 ```bash
 python -m http.server 8000
 ```
 
-Then open:
+Then open `http://localhost:8000`.
 
-```text
-http://localhost:8000
-```
-
-Node.js 20+ is used for repository checks.
-
-Install development dependencies once:
+Node.js 20+ is supported. Install developer dependencies once:
 
 ```bash
 npm install
 npx playwright install chromium
 ```
 
-Then run:
+Useful commands:
 
 ```bash
 npm run check
+npm run lint
 npm test
 npm run test:e2e
-```
-
-Useful browser-test commands:
-
-```bash
 npm run test:e2e:desktop
 npm run test:e2e:mobile
 npm run test:all
+npm run format
 ```
 
-`npm run check` syntax-checks every JavaScript module under `src/`.
+`npm test` runs both the modular smoke checks and deterministic rule tests.
 
-`npm test` verifies important architecture and feature contracts, including:
+`npm run test:e2e` launches a real local web server and Chromium. The browser suite covers desktop and mobile user flows including:
 
-- exactly one module entry script
-- required source modules
-- backward-compatible save keys
-- Web Crypto RNG
-- Blackjack rule support
-- Roulette and Slots contracts
-- 200 unique Trivia questions
-- navigation guards
-- progression services
-
-`npm run test:e2e` launches a real local web server and Chromium through Playwright. The browser suite checks both a desktop viewport and a mobile viewport and exercises real user flows such as:
-
-- clean dashboard startup and initial wallet
-- navigation across every main screen
-- Dice settlement and persistence after reload
-- Roulette settlement and activity history
-- Slots settlement and post-animation usability
+- clean startup and initial wallet
+- navigation across all main screens
+- Dice persistence
+- Roulette settlement
+- Slots settlement
 - Blackjack deal/settlement flow
-- Blackjack active-hand navigation confirmation
+- active-hand navigation protection
 - Trivia category persistence
+- Midnight Purple full-theme switching and persistence
 - Profile save export
-- mobile navigation and touch-size controls
+- PWA manifest/service-worker availability
+- mobile Games and Progress hubs
+- mobile touch-size controls
 - uncaught browser runtime errors
 
 # Continuous integration
 
-GitHub Actions automatically runs the complete quality pipeline on pushes and pull requests targeting `main`:
+GitHub Actions runs the quality pipeline on pushes and pull requests targeting `main`:
 
-1. install Node dependencies
-2. syntax-check all source modules
-3. run architecture/smoke tests
-4. install Chromium
-5. run Playwright desktop + mobile end-to-end tests
-6. upload Playwright HTML reports, screenshots, videos, and traces when available
+1. install dependencies
+2. syntax-check JavaScript
+3. run ESLint
+4. run smoke + deterministic rule tests
+5. run `npm audit --audit-level=high`
+6. install Chromium
+7. run desktop + mobile Playwright tests
+8. upload Playwright reports, screenshots, videos, and traces when available
 
-Playwright artifacts are retained for 14 days so browser failures can be reproduced and debugged from GitHub Actions.
+Dependabot also checks npm dependencies weekly.
 
 # Hosting
 
