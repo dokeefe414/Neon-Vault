@@ -64,7 +64,7 @@ test('wallet and activity persist across reloads after a dice round',async({page
   await expect(page.locator('#message')).toContainText(/Rolled \d+ — (WIN|LOSS)/);
   const first=await persistedState(page);
   expect(first.history.length).toBeGreaterThan(0);
-  expect(first.saveVersion).toBe(4);
+  expect(first.saveVersion).toBe(5);
   const balance=first.balance;
   await page.reload();
   await expect(page.locator('#balance')).toHaveText(new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(balance/100));
