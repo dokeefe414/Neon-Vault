@@ -1,15 +1,16 @@
-# NEON VAULT v5.2 — The Premier Experience
+# NEON VAULT v5.3 — The Premier Experience
 
 **[Play NEON VAULT](https://dokeefe414.github.io/Neon-Vault/)** · Created by Daniel O'Keefe
 
 NEON VAULT is a responsive, installable, offline-capable browser casino **simulation using fictional credits only**. No real-money wagering, deposits, purchases, cash prizes, or credits of monetary value.
 
-## What's new in v5.1 and v5.2
+## What's new in v5.3, v5.2 and v5.1
 
 - Refined Blackjack table with staged card CSS, dealer/player separation, active-hand highlights, payout chips, betting tray, inline educational strategy hints and a standalone strategy trainer.
 - Animated European Roulette wheel with an aligned result pocket, number betting board, outside bets and clarified win/loss summaries.
 - Five-reel Slots animation with staggered stops, improved payline highlights, summarized results, wilds, scatters and free spins.
 - Player name/avatar, cosmetic card backs/table felts/profile badges, and optional XP/style-token rewards.
+- Major Trivia Rescue expansion: at least 100 distinct questions in every specialist category, difficulty balancing, randomized answer order, and no-repeat cycling with unseen progress.
 - Optional weekly challenges, detailed analytics, accessible tutorial, sound volume and reduced-motion settings.
 - Save export/import, v5 migration compatibility, session tracking, PWA/offline support, and Blackjack reload recovery.
 
@@ -35,6 +36,8 @@ Serve with `python3 -m http.server 4173` and open http://localhost:4173 for loca
 - `src/core/rules.js`: pure Roulette and Slots rules
 - `src/core/strategy.js`: six-deck Blackjack basic strategy advisor
 - `src/core/simulation.js`: seeded deterministic simulations for QA
+- `src/data/trivia-*.js`: category expansions and validated four-choice question factory
+- `src/games/trivia-selection.js`: saved per-category no-repeat cycles and question selection
 - `src/games/`: standalone game controllers
 - `src/ui/views.js`, `src/ui/v5.js`: screens, tutorials, analytics, player cosmetics
 - `src/progression/`: achievements, daily and weekly challenges, session analytics

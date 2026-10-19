@@ -13,8 +13,9 @@ const required=[
   'manifest.webmanifest','sw.js','icon.svg','v5.css','eslint.config.js','prettier.config.js',
   'src/app.js','src/core/utils.js','src/core/random.js','src/core/store.js','src/core/strategy.js','src/core/rules.js','src/core/simulation.js',
   'src/ui/common.js','src/ui/views.js','src/ui/v5.js','src/progression/progression.js','src/progression/session.js','src/progression/weekly.js','src/data/trivia.js',
-  'src/games/blackjack.js','src/games/roulette.js','src/games/slots.js','src/games/dice.js','src/games/trivia.js',
-  'tests/rules.test.mjs','tests/v5.test.mjs','tests/stability.test.mjs','tests/e2e/v52.spec.js','tests/e2e/neon-vault.spec.js','tests/e2e/v5.spec.js'
+  'src/games/blackjack.js','src/games/roulette.js','src/games/slots.js','src/games/dice.js','src/games/trivia.js','src/games/trivia-selection.js',
+  'src/data/trivia-factory.js','src/data/trivia-geography.js','src/data/trivia-science.js','src/data/trivia-math.js','src/data/trivia-sports.js','src/data/trivia-history.js','src/data/trivia-technology.js',
+  'tests/rules.test.mjs','tests/v5.test.mjs','tests/stability.test.mjs','tests/trivia-bank.test.mjs','tests/e2e/v52.spec.js','tests/e2e/neon-vault.spec.js','tests/e2e/v5.spec.js'
 ];
 required.forEach(file=>assert.ok(fs.existsSync(path.join(root,file)),`Missing required v4 file: ${file}`));
 
@@ -58,7 +59,7 @@ const slots=read('src/games/slots.js');
 ['7 PAYLINES','freeSpinBet','slot-bonus','Slots · Free Spin'].forEach(term=>assert.ok(slots.includes(term),`Slots feature missing: ${term}`));
 
 const triviaGame=read('src/games/trivia.js');
-assert.ok(triviaGame.includes('bucketKey(category,difficulty)'),'Trivia no-repeat tracking must be category/difficulty aware');
+assert.ok(triviaGame.includes('selectTriviaRun'),'Trivia must use category-wide no-repeat cycles');
 assert.ok(triviaGame.includes('10-question streak! Auto-cashed'),'Trivia 10-question auto cash-out is missing');
 
 const progression=read('src/progression/progression.js');
@@ -81,7 +82,7 @@ const gamePolish=read('game-polish.css');
 assert.ok(gamePolish.includes('.blackjack-hand.active'),'Active Blackjack hand styling is missing');
 
 const serviceWorker=read('sw.js');
-assert.ok(serviceWorker.includes("const CACHE='neon-vault-v5.2'"),'v4 service-worker cache is missing');
+assert.ok(serviceWorker.includes("const CACHE='neon-vault-v5.3'"),'v4 service-worker cache is missing');
 assert.ok(serviceWorker.includes("'./src/app.js'"),'Service worker must cache the app entry point');
 assert.ok(serviceWorker.includes("'./game-polish.css'"),'Service worker must cache final game polish');
 assert.ok(serviceWorker.includes("event.request.mode==='navigate'"),'Offline navigation fallback must be request-type aware');
@@ -89,8 +90,9 @@ assert.ok(serviceWorker.includes("event.request.mode==='navigate'"),'Offline nav
 (async()=>{
   const moduleUrl=pathToFileURL(path.join(root,'src/data/trivia.js')).href;
   const trivia=await import(moduleUrl);
-  assert.equal(trivia.triviaQuestions.length,200,'Trivia bank must contain exactly 200 questions');
-  assert.equal(new Set(trivia.triviaQuestions.map(q=>q.q)).size,200,'Trivia question prompts must be unique');
+  assert.ok(trivia.triviaQuestions.length>=600,'Trivia must contain at least 600 unique questions');
+  assert.equal(new Set(trivia.triviaQuestions.map(q=>q.q)).size,trivia.triviaQuestions.length,'Trivia question prompts must be unique');
+  for(const category of trivia.triviaCategories.filter(cat=>cat!=='General'))assert.ok(trivia.triviaCategoryCounts[category]>=100,category+' must have at least 100 questions');
   ['General','Geography','Science','Sports','Math','History & Culture','Technology'].forEach(category=>assert.ok(trivia.triviaCategories.includes(category),`Trivia category missing: ${category}`));
-  console.log('NEON VAULT v5 smoke tests passed.');
+  console.log('NEON VAULT Trivia expansion smoke tests passed.');
 })().catch(error=>{console.error(error);process.exit(1);});

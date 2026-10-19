@@ -1,5 +1,17 @@
 # NEON VAULT Changelog
 
+## 5.3.0 — Trivia Variety Expansion
+
+- Replaced the single 200-question bank with six distinct specialist expansions and a General pool drawing across every category.
+- Every specialization (Geography, Science, Sports, Math, History & Culture, and Technology) now has at least 100 unique prompts with four distinct choices per question.
+- Added difficulty variety and safer answer text rendering.
+- Trivia now uses category-wide no-repeat cycles that survive reloads and category switching, including conversion of previously tracked difficulty-specific seen lists.
+- Added per-category question counts and remaining-unseen progress displayed in Trivia Rescue.
+- Answer order is shuffled each run without altering the correct answer.
+- Expanded automated checks for bank uniqueness, choice validity, category coverage, old progress recovery and exhaustion behavior.
+
+
+
 ## 5.2.0 — The Casino Floor Polish
 
 - Redesigned Blackjack table hierarchy with dealer reveal state, stronger player-hand indicators, wager chips, and clear result pills.

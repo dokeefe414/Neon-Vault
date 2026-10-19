@@ -1,3 +1,10 @@
+import {geographyExtra} from './trivia-geography.js';
+import {scienceExtra} from './trivia-science.js';
+import {sportsExtra} from './trivia-sports.js';
+import {mathExtra} from './trivia-math.js';
+import {historyExtra} from './trivia-history.js';
+import {technologyExtra} from './trivia-technology.js';
+
 const questions=[];
 
 function add(q,correct,wrongs,category='General',difficulty='easy'){
@@ -34,7 +41,17 @@ for(let i=0;i<20;i++){const a=2+(i%10),b=3+Math.floor(i/10)*4+(i%2),answer=a*b;a
 ['Which scientist developed the theory of general relativity?','Albert Einstein',['Isaac Newton','Niels Bohr','Galileo Galilei'],'Science','medium'],['What is the chemical symbol for gold?','Au',['Ag','Gd','Go'],'Science','medium'],['Which river runs through London?','Thames',['Seine','Danube','Rhine'],'Geography','medium'],['Who wrote Romeo and Juliet?','William Shakespeare',['Charles Dickens','Jane Austen','Mark Twain'],'History & Culture','medium'],['What is the largest internal organ in the human body?','Liver',['Heart','Lung','Brain'],'Science','medium'],['Which country gifted the Statue of Liberty to the United States?','France',['Spain','Italy','Canada'],'History & Culture','medium'],['Which U.S. state is largest by area?','Alaska',['Texas','California','Montana'],'Geography','medium'],['Which element has the chemical symbol Na?','Sodium',['Nitrogen','Neon','Nickel'],'Science','medium'],['Which ancient civilization built Machu Picchu?','Inca',['Maya','Aztec','Roman'],'History & Culture','medium'],['Who painted the Mona Lisa?','Leonardo da Vinci',['Michelangelo','Raphael','Donatello'],'History & Culture','medium'],['Which blood type is commonly called the universal red-cell donor?','O-',['A+','AB+','B-'],'Science','medium'],['Who discovered penicillin?','Alexander Fleming',['Marie Curie','Louis Pasteur','Gregor Mendel'],'Science','medium'],['Which mountain is the highest in Africa?','Kilimanjaro',['Mount Kenya','Ras Dashen','Atlas Peak'],'Geography','medium'],['Which programming language was created by Guido van Rossum?','Python',['Java','C++','Ruby'],'Technology','medium'],['Which scientist proposed the three laws of planetary motion?','Johannes Kepler',['Tycho Brahe','Galileo Galilei','Nicolaus Copernicus'],'Science','hard'],['What is the atomic number of gold?','79',['47','82','92'],'Science','hard'],['Which physicist formulated the uncertainty principle?','Werner Heisenberg',['Max Planck','Niels Bohr','Erwin Schrödinger'],'Science','hard'],['What is the time complexity of binary search on a sorted array?','O(log n)',['O(1)','O(n)','O(n²)'],'Technology','hard'],['Who wrote One Hundred Years of Solitude?','Gabriel García Márquez',['Jorge Luis Borges','Pablo Neruda','Mario Vargas Llosa'],'History & Culture','hard'],['What is Avogadro’s number approximately?','6.02 × 10²³',['3.00 × 10⁸','9.81 × 10²','1.60 × 10⁻¹⁹'],'Science','hard']
 ].forEach(([q,c,w,cat,d])=>add(q,c,w,cat,d));
 
-if(questions.length!==200)throw new Error(`Trivia bank expected 200 questions, found ${questions.length}`);
-
-export const triviaQuestions=questions;
 export const triviaCategories=['General','Geography','Science','Sports','Math','History & Culture','Technology'];
+const extra=[...geographyExtra,...scienceExtra,...sportsExtra,...mathExtra,...historyExtra,...technologyExtra];
+const prompts=new Set(questions.map(item=>item.q));
+for(const item of extra){
+  if(prompts.has(item.q))throw new Error(`Duplicate trivia prompt: ${item.q}`);
+  prompts.add(item.q);
+  questions.push(item);
+}
+for(const category of triviaCategories.filter(c=>c!=='General')){
+  const pool=questions.filter(q=>q.category===category);
+  if(pool.length<100)throw new Error(`Trivia category ${category} has only ${pool.length} questions; expected at least 100`);
+}
+export const triviaQuestions=questions;
+export const triviaCategoryCounts=Object.fromEntries(triviaCategories.map(cat=>[cat,cat==='General'?questions.length:questions.filter(q=>q.category===cat).length]));
