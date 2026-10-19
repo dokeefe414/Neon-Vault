@@ -136,7 +136,7 @@ test('trivia category selection persists and questions render',async({page})=>{
   await bootClean(page);
   await nav(page,'trivia');
   await expect(page.locator('#answers button')).toHaveCount(4);
-  await page.locator('#triviaCategory').selectOption({label:'Science'});
+  await page.locator('#triviaCategory').selectOption({value:'Science'});
   await expect(page.locator('#triviaCategory')).toHaveValue('Science');
   await page.reload();
   await nav(page,'trivia');
