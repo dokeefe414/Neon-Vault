@@ -241,3 +241,9 @@ GitHub Actions runs the pipeline on pushes and pull requests to `main`. Playwrig
 ## Backend boundary
 
 The GitHub Pages build remains intentionally client-side. It contains no account passwords, private API credentials, or server secrets. Future cloud accounts should use a real authentication/data backend rather than embedding privileged credentials in browser code.
+
+## v5: Premier Experience
+
+The new reusable game math lives in `src/core/rules.js` and the deterministic QA harness in `src/core/simulation.js`; both are independent of UI/DOM effects. `src/core/strategy.js` explains six-deck Blackjack basic-strategy decisions without changing actual cards or payouts. `src/ui/v5.js` supplies local player identity customization, cosmetics, the tutorial, analytics, practice screens, and optional weekly challenges. `src/progression/weekly.js` stores local Monday-based weekly goals and awards XP/cosmetic tokens exactly once per goal. The selected bet chip tray is a non-authoritative input control.
+
+Storage keys are unchanged for v4 migration compatibility; schema version advances to five, including optional volume, cosmetic inventory, token balance, tutorial flag and weekly progress. Real-money gambling, accounts, shared balances and cloud leaderboards remain unsupported. A secure future backend must generate/validate outcomes and settle idempotent transactions server-side; localStorage is not trusted.

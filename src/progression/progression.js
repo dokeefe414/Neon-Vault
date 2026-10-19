@@ -1,6 +1,7 @@
 import {DAY,localDateKey,money} from '../core/utils.js';
 import {getState,getMeta,saveMeta,updateMeta,grant,subscribe} from '../core/store.js';
 import {miniToast,playTone} from '../ui/common.js';
+import {trackWeekly} from './weekly.js';
 
 const primaryGame=name=>name==='Blackjack'||/^Blackjack · Hand \d+$/.test(name)||name==='Roulette'||name==='Dice'||/^Slots(?: · Free Spin)?$/.test(name)||/^Trivia \(\d+ streak\)$/.test(name);
 const gameKey=name=>name?.startsWith('Blackjack')?'Blackjack':name?.startsWith('Roulette')?'Roulette':name?.startsWith('Slots')?'Slots':name?.startsWith('Dice')?'Dice':name?.startsWith('Trivia')?'Trivia':null;
@@ -74,6 +75,7 @@ export function dailyChallenge(){
 }
 
 export function signal(type){
+  trackWeekly(type);
   const meta=getMeta();
   if(type==='roulette-straight-win')meta.flags.rouletteStraightWin=true;
   if(type==='slot-bonus')meta.flags.slotBonus=true;
@@ -106,6 +108,7 @@ export function checkAchievements(){
     if(!meta.achievements[achievement.id]&&achievement.test(s)){
       meta.achievements[achievement.id]=Date.now();
       meta.xp=(Number(meta.xp)||0)+75;
+      meta.cosmeticTokens=(Number(meta.cosmeticTokens)||0)+2;
       changed=true;
       miniToast(`Achievement unlocked: ${achievement.name} · +75 XP`);
       playTone('unlock');

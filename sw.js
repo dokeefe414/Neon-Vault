@@ -1,8 +1,8 @@
-const CACHE='neon-vault-v4';
+const CACHE='neon-vault-v5';
 const CORE=[
-  './','./index.html','./style.css','./creator.css','./pro.css','./game-polish.css','./mobile.css','./icon.svg','./manifest.webmanifest',
-  './src/app.js','./src/core/utils.js','./src/core/random.js','./src/core/store.js',
-  './src/ui/common.js','./src/ui/views.js','./src/progression/progression.js','./src/progression/session.js',
+  './','./index.html','./style.css','./creator.css','./pro.css','./game-polish.css','./mobile.css','./v5.css','./icon.svg','./manifest.webmanifest',
+  './src/app.js','./src/core/utils.js','./src/core/random.js','./src/core/store.js','./src/core/rules.js','./src/core/strategy.js','./src/core/simulation.js',
+  './src/ui/common.js','./src/ui/views.js','./src/ui/v5.js','./src/progression/progression.js','./src/progression/session.js','./src/progression/weekly.js',
   './src/data/trivia.js','./src/games/blackjack.js','./src/games/roulette.js','./src/games/slots.js','./src/games/dice.js','./src/games/trivia.js'
 ];
 

@@ -10,11 +10,11 @@ const read=file=>fs.readFileSync(path.join(root,file),'utf8');
 
 const required=[
   'index.html','style.css','creator.css','pro.css','game-polish.css','mobile.css','README.md','CHANGELOG.md','ARCHITECTURE.md',
-  'manifest.webmanifest','sw.js','icon.svg','eslint.config.js','prettier.config.js',
-  'src/app.js','src/core/utils.js','src/core/random.js','src/core/store.js',
-  'src/ui/common.js','src/ui/views.js','src/progression/progression.js','src/progression/session.js','src/data/trivia.js',
+  'manifest.webmanifest','sw.js','icon.svg','v5.css','eslint.config.js','prettier.config.js',
+  'src/app.js','src/core/utils.js','src/core/random.js','src/core/store.js','src/core/strategy.js','src/core/rules.js','src/core/simulation.js',
+  'src/ui/common.js','src/ui/views.js','src/ui/v5.js','src/progression/progression.js','src/progression/session.js','src/progression/weekly.js','src/data/trivia.js',
   'src/games/blackjack.js','src/games/roulette.js','src/games/slots.js','src/games/dice.js','src/games/trivia.js',
-  'tests/rules.test.mjs','tests/e2e/neon-vault.spec.js'
+  'tests/rules.test.mjs','tests/v5.test.mjs','tests/e2e/neon-vault.spec.js','tests/e2e/v5.spec.js'
 ];
 required.forEach(file=>assert.ok(fs.existsSync(path.join(root,file)),`Missing required v4 file: ${file}`));
 
@@ -30,7 +30,7 @@ assert.ok(index.includes('game-polish.css'),'Final game polish stylesheet must b
 const store=read('src/core/store.js');
 assert.ok(store.includes("STATE_KEY='neon-vault-save-v1'"),'Legacy wallet/history save key must stay compatible');
 assert.ok(store.includes("META_KEY='neon-vault-meta-v2'"),'Legacy progression save key must stay compatible');
-assert.ok(store.includes('SAVE_VERSION=4'),'v4 save migration marker is missing');
+assert.ok(store.includes('SAVE_VERSION=5'),'v4 save migration marker is missing');
 assert.ok(store.includes('migrateState'),'State migration function is missing');
 assert.ok(store.includes('migrateMeta'),'Metadata migration function is missing');
 assert.ok(store.includes('function settle('),'Central settlement service is missing');
@@ -78,7 +78,7 @@ const gamePolish=read('game-polish.css');
 assert.ok(gamePolish.includes('.blackjack-hand.active'),'Active Blackjack hand styling is missing');
 
 const serviceWorker=read('sw.js');
-assert.ok(serviceWorker.includes("const CACHE='neon-vault-v4'"),'v4 service-worker cache is missing');
+assert.ok(serviceWorker.includes("const CACHE='neon-vault-v5'"),'v4 service-worker cache is missing');
 assert.ok(serviceWorker.includes("'./src/app.js'"),'Service worker must cache the app entry point');
 assert.ok(serviceWorker.includes("'./game-polish.css'"),'Service worker must cache final game polish');
 assert.ok(serviceWorker.includes("event.request.mode==='navigate'"),'Offline navigation fallback must be request-type aware');
@@ -89,5 +89,5 @@ assert.ok(serviceWorker.includes("event.request.mode==='navigate'"),'Offline nav
   assert.equal(trivia.triviaQuestions.length,200,'Trivia bank must contain exactly 200 questions');
   assert.equal(new Set(trivia.triviaQuestions.map(q=>q.q)).size,200,'Trivia question prompts must be unique');
   ['General','Geography','Science','Sports','Math','History & Culture','Technology'].forEach(category=>assert.ok(trivia.triviaCategories.includes(category),`Trivia category missing: ${category}`));
-  console.log('NEON VAULT v4 smoke tests passed.');
+  console.log('NEON VAULT v5 smoke tests passed.');
 })().catch(error=>{console.error(error);process.exit(1);});

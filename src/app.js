@@ -9,15 +9,16 @@ import {rouletteGame} from './games/roulette.js';
 import {slotsGame} from './games/slots.js';
 import {diceGame} from './games/dice.js';
 import {triviaGame} from './games/trivia.js';
+import {renderV5View,enhanceV5View,applyCosmetics} from './ui/v5.js';
 
 const games={blackjack:blackjackGame,roulette:rouletteGame,slots:slotsGame,dice:diceGame,trivia:triviaGame};
-const titles={home:'The Vault',games:'Games',progress:'Progress',blackjack:'Blackjack',roulette:'Roulette',slots:'Slots',dice:'Dice',trivia:'Trivia Rescue',profile:'Player Profile',achievements:'Achievements',challenges:'Daily Challenge',history:'Activity'};
+const titles={home:'The Vault',games:'Games',progress:'Progress',blackjack:'Blackjack',roulette:'Roulette',slots:'Slots',dice:'Dice',trivia:'Trivia Rescue',profile:'Player Profile',achievements:'Achievements',challenges:'Daily Challenge',history:'Activity',guide:'How to Play',trainer:'Blackjack Academy',analytics:'Analytics',wardrobe:'Style Lounge',weekly:'Weekly Challenges'};
 let view='home';
 
 function setActiveNav(next){
   document.querySelectorAll('.nav,.dock-nav').forEach(button=>{
     const target=button.dataset.view;
-    const active=target===next||(target==='games'&&['blackjack','roulette','slots','dice'].includes(next))||(target==='progress'&&['achievements','challenges','history'].includes(next));
+    const active=target===next||(target==='games'&&['blackjack','roulette','slots','dice'].includes(next))||(target==='progress'&&['achievements','challenges','history','analytics','weekly','trainer'].includes(next));
     button.classList.toggle('active',active);
   });
 }
@@ -50,7 +51,7 @@ function renderGamesHub(){
 
 function renderProgressHub(){
   renderWallet();
-  $('content').innerHTML=`<div class="section-head"><div><div class="pro-kicker">YOUR PROGRESS</div><h2 style="margin-top:6px">Stats, goals, and history</h2></div></div><div class="games hub-grid"><article class="card hub-card"><span class="symbol accent">★</span><h3>Achievements</h3><p>Track milestones, unlock badges, and earn bonus XP.</p><button data-hub-go="achievements">VIEW ACHIEVEMENTS →</button></article><article class="card hub-card"><span class="symbol accent">✓</span><h3>Daily Challenge</h3><p>Complete today’s objective for virtual credits and XP.</p><button data-hub-go="challenges">VIEW CHALLENGE →</button></article><article class="card hub-card"><span class="symbol accent">◷</span><h3>Activity</h3><p>Review wagers, payouts, and net results from your local history.</p><button data-hub-go="history">VIEW ACTIVITY →</button></article></div>`;
+  $('content').innerHTML=`<div class="section-head"><div><div class="pro-kicker">YOUR PROGRESS</div><h2 style="margin-top:6px">Stats, goals, and history</h2></div></div><div class="games hub-grid"><article class="card hub-card"><span class="symbol accent">★</span><h3>Achievements</h3><p>Track milestones, unlock badges, and earn bonus XP.</p><button data-hub-go="achievements">VIEW ACHIEVEMENTS →</button></article><article class="card hub-card"><span class="symbol accent">✓</span><h3>Daily Challenge</h3><p>Complete today’s objective for virtual credits and XP.</p><button data-hub-go="challenges">VIEW CHALLENGE →</button></article><article class="card hub-card"><span class="symbol accent">◷</span><h3>Activity</h3><p>Review wagers, payouts, and net results from your local history.</p><button data-hub-go="history">VIEW ACTIVITY →</button></article><article class="card hub-card"><span class="symbol accent">▥</span><h3>Analytics</h3><p>Detailed charts and per-game performance.</p><button data-hub-go="analytics">VIEW ANALYTICS →</button></article><article class="card hub-card"><span class="symbol accent">✧</span><h3>Weekly Goals</h3><p>Optional milestones and style tokens.</p><button data-hub-go="weekly">WEEKLY GOALS →</button></article><article class="card hub-card"><span class="symbol accent">♠</span><h3>Strategy Academy</h3><p>Learn Blackjack with practice hands.</p><button data-hub-go="trainer">OPEN TRAINER →</button></article></div>`;
   wireHubButtons();
 }
 
@@ -65,6 +66,7 @@ export function navigate(next,{force=false}={}){
   if(!titles[next])next='home';
   if(!force&&!canLeaveCurrent(next))return;
   view=next;
+  const main=$('mainContent');if(main)main.scrollTop=0;
   setActiveNav(view);
   $('pageTitle').textContent=titles[view];
   resetMainScroll();
@@ -74,16 +76,18 @@ export function navigate(next,{force=false}={}){
 
 function renderCurrent(){
   applyPreferences();
+  applyCosmetics();
   renderWallet();
   try{
-    if(view==='home')return renderHome(navigate);
+    if(renderV5View(view,navigate))return;
+    if(view==='home'){renderHome(navigate);enhanceV5View(view,navigate);return;}
     if(view==='games')return renderGamesHub();
     if(view==='progress')return renderProgressHub();
     if(view==='history')return renderActivity();
-    if(view==='profile'){renderProfile();appendSessionCard();return;}
+    if(view==='profile'){renderProfile();appendSessionCard();enhanceV5View(view,navigate);return;}
     if(view==='achievements')return renderAchievements();
     if(view==='challenges')return renderChallenges();
-    return games[view].render();
+    games[view].render();enhanceV5View(view,navigate);return;
   }catch(error){
     console.error('NEON VAULT render error',error);
     $('content').innerHTML='<div class="game-panel"><h2>Something went wrong</h2><p>The current screen could not be rendered. Your saved wallet and history were not cleared.</p><button class="primary" id="recoverHome">RETURN TO DASHBOARD</button></div>';
@@ -99,7 +103,7 @@ window.addEventListener('unhandledrejection',event=>console.error('NEON VAULT pr
 
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(error=>console.warn('Service worker registration skipped',error)));
 
-applyPreferences();
+applyPreferences();applyCosmetics();
 dailyChallenge();
 checkAchievements();
 navigate('home',{force:true});

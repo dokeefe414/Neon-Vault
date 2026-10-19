@@ -1,5 +1,20 @@
 # NEON VAULT Changelog
 
+## 5.0.0 — The Premier Experience
+
+- Enhanced Blackjack visuals, optional inline basic-strategy hints, and a full strategy practice screen.
+- Animated European roulette wheel with numbers in physical wheel order.
+- Five-reel staggered slot reveal, payline highlights, and persistent free spins.
+- Unified casino betting-chip tray with Undo and Reset across wager games.
+- Local custom player names, avatars, card backs, table felts and profile badges, plus style-token cosmetics.
+- Optional weekly challenges awarding XP and cosmetic tokens.
+- Per-game analytics, average wagers, loss streaks, and daily net bar charts.
+- How to Play guide and sound-volume controls, with reduced-motion support.
+- Pure Roulette/Slots rule engines and seeded simulation QA.
+- Expanded unit and Playwright desktop/mobile regression coverage.
+- Versioned v5 save migrations preserve the v4 bankroll and history; offline cache bumped to v5.
+- Cloud accounts and public leaderboards require a secure authenticated backend and are not represented as live features.
+
 ## 4.0.0 — Visual Systems & Reliability
 
 - Rebuilt Midnight Purple and High Roller Gold as full-interface themes instead of accent-only swaps.

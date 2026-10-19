@@ -3,40 +3,15 @@ import {weightedChoice} from '../core/random.js';
 import {getState,getMeta,saveMeta,debit,settle} from '../core/store.js';
 import {parseMainBet,renderWallet,toast,wagerControls,wireBetButtons} from '../ui/common.js';
 import {signal} from '../progression/progression.js';
+import {slotSymbols as symbols,paylines,evaluateSlotLine,evaluateSlots} from '../core/rules.js';
 
-const symbols=[
-  {value:'🍒',weight:28,p:[0,0,2,5,12,30]},
-  {value:'🍋',weight:24,p:[0,0,2,5,15,35]},
-  {value:'🔔',weight:18,p:[0,0,3,8,20,50]},
-  {value:'💎',weight:12,p:[0,0,4,12,35,90]},
-  {value:'7️⃣',weight:8,p:[0,0,6,20,70,200]},
-  {value:'⭐',weight:6,p:[0,0,5,15,50,125],wild:true},
-  {value:'✨',weight:4,p:[0,0,0,0,0,0],scatter:true}
-];
-const paylines=[[1,1,1,1,1],[0,0,0,0,0],[2,2,2,2,2],[0,1,2,1,0],[2,1,0,1,2],[0,0,1,2,2],[2,2,1,0,0]];
-const def=value=>symbols.find(x=>x.value===value);
 const spinSymbol=()=>weightedChoice(symbols.map(x=>({value:x.value,weight:x.weight})));
 const isActiveView=()=>document.querySelector('.nav[data-view="slots"]')?.classList.contains('active');
 
 export class SlotsGame{
   constructor(){this.spinning=false;}
   hasActiveRound(){return this.spinning;}
-  evaluateLine(grid,line,betPerLine){
-    const values=line.map((row,col)=>grid[row][col]);
-    let base=null,count=0;
-    for(const value of values){
-      const item=def(value);
-      if(item.scatter)break;
-      if(item.wild){count++;continue;}
-      if(base===null){base=value;count++;continue;}
-      if(value===base){count++;continue;}
-      break;
-    }
-    if(base===null&&count>0)base='⭐';
-    if(count<3||!base)return {payout:0,label:''};
-    const mult=def(base).p[count]||0;
-    return {payout:Math.floor(betPerLine*mult),label:`${base} ×${count} (${mult}×)`};
-  }
+  evaluateLine(grid,line,betPerLine){return evaluateSlotLine(grid,line,betPerLine);}
   render(){
     renderWallet();
     const meta=getMeta();
@@ -75,9 +50,7 @@ export class SlotsGame{
     this.spinning=true;
     if(isFree)freeSpins--;else debit(bet,'Slots wager');
     const grid=Array.from({length:3},()=>Array.from({length:5},spinSymbol));
-    const wins=paylines.map(line=>this.evaluateLine(grid,line,bet/paylines.length)).filter(x=>x.payout>0);
-    const scatters=grid.flat().filter(x=>x==='✨').length;
-    const payout=wins.reduce((sum,x)=>sum+x.payout,0);
+    const {wins,scatters,payout}=evaluateSlots(grid,bet);
     if(scatters>=3){
       if(!isFree)freeSpinBet=bet;
       freeSpins+=3;
@@ -91,17 +64,25 @@ export class SlotsGame{
     this.render();
     const gridEl=$('slotGrid');
     if(gridEl&&!getMeta().reduceMotion)gridEl.classList.add('spinning');
+    const reduced=getMeta().reduceMotion,duration=reduced?30:1100;
+    if(!reduced){for(let column=0;column<5;column++)setTimeout(()=>{
+      if(!isActiveView()||!$('slotGrid'))return;
+      for(let row=0;row<3;row++){
+        const cell=$('slotGrid').children[row*5+column];
+        if(cell){cell.textContent=grid[row][column];cell.classList.add('v5-stop');}
+      }
+    },(column+1)*175);}
     setTimeout(()=>{
       this.spinning=false;
       if(!isActiveView())return;
       const el=$('slotGrid');
-      if(el){el.classList.remove('spinning');el.innerHTML=Array.from({length:15},(_,i)=>`<div class="slot-cell">${grid[Math.floor(i/5)][i%5]}</div>`).join('');}
+      if(el){el.classList.remove('spinning');el.innerHTML=Array.from({length:15},(_,i)=>`<div class="slot-cell ${wins.some(win=>paylines[win.index][i%5]===Math.floor(i/5)&&i%5<win.count)?'v5-win':''}">${grid[Math.floor(i/5)][i%5]}</div>`).join('');}
       if($('freeSpins'))$('freeSpins').textContent=freeSpins;
       const bonus=scatters>=3?` · BONUS! ${scatters} scatters → +3 free spins`:'';
       if($('message'))$('message').textContent=wins.length?`${wins.length} payline${wins.length>1?'s':''} won · ${money(payout)} returned${bonus}`:`No payline win${bonus}`;
       toast(`Slots: ${record.net>=0?'+':''}${money(record.net)} net`,record.net>0?'win':record.net<0?'loss':'tap');
       if($('play')){$('play').disabled=false;$('play').textContent=freeSpins?`FREE SPIN (${freeSpins})`:'SPIN REELS';}
-    },getMeta().reduceMotion?30:750);
+    },duration);
   }
 }
 

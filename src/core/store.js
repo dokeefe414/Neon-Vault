@@ -3,7 +3,7 @@ import {money} from './utils.js';
 export const STATE_KEY='neon-vault-save-v1';
 export const META_KEY='neon-vault-meta-v2';
 export const START_BALANCE=100000;
-export const SAVE_VERSION=4;
+export const SAVE_VERSION=5;
 
 const freshState=()=>({saveVersion:SAVE_VERSION,balance:START_BALANCE,ledger:[],history:[]});
 const freshMeta=()=>({
@@ -21,6 +21,11 @@ const freshMeta=()=>({
   freeSpins:0,
   freeSpinBet:0,
   sessions:[],
+  volume:.65,
+  cosmeticTokens:0,
+  cosmetics:{name:'Vault Player',avatar:'◆',cardBack:'classic',felt:'emerald',badge:'Player',owned:[]},
+  weekly:null,
+  tutorialSeen:false,
   createdAt:Date.now()
 });
 
@@ -38,6 +43,7 @@ function migrateState(raw){
   const next={...raw};
   const from=Number.isSafeInteger(next.saveVersion)?next.saveVersion:1;
   if(from<4)next.saveVersion=4;
+  if(from<5)next.saveVersion=5;
   return next;
 }
 
@@ -47,6 +53,7 @@ function migrateMeta(raw){
   const from=Number.isSafeInteger(next.saveVersion)?next.saveVersion:1;
   if(from<3&&Array.isArray(next.triviaSeenPro))next.triviaSeenPro={};
   if(from<4&&!Array.isArray(next.sessions))next.sessions=[];
+  if(from<5){if(!Number.isFinite(next.volume))next.volume=.65;if(!Number.isSafeInteger(next.cosmeticTokens))next.cosmeticTokens=Object.keys(next.achievements||{}).length*2;}
   next.saveVersion=SAVE_VERSION;
   return next;
 }
@@ -64,6 +71,12 @@ function normalizeMeta(raw){
   if(!result.triviaSeenPro||Array.isArray(result.triviaSeenPro)||typeof result.triviaSeenPro!=='object')result.triviaSeenPro={};
   if(!Array.isArray(result.sessions))result.sessions=[];
   if(!['mint','purple','gold'].includes(result.theme))result.theme='mint';
+  if(!Number.isFinite(result.volume)||result.volume<0||result.volume>1)result.volume=.65;
+  if(!Number.isSafeInteger(result.cosmeticTokens)||result.cosmeticTokens<0)result.cosmeticTokens=0;
+  if(!result.cosmetics||typeof result.cosmetics!=='object')result.cosmetics=freshMeta().cosmetics;
+  result.cosmetics={...freshMeta().cosmetics,...result.cosmetics};
+  if(!Array.isArray(result.cosmetics.owned))result.cosmetics.owned=[];
+  if(!result.weekly||typeof result.weekly!=='object')result.weekly=null;
   result.saveVersion=SAVE_VERSION;
   return result;
 }

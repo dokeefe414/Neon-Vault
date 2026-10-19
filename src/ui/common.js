@@ -26,11 +26,11 @@ export function playTone(kind='tap'){
     const ctx=playTone.ctx;
     if(ctx.state==='suspended')ctx.resume();
     const osc=ctx.createOscillator(),gain=ctx.createGain();
-    const [freq,duration]=({win:[660,.09],loss:[180,.11],unlock:[880,.14],tap:[420,.045]})[kind]||[420,.045];
+    const [freq,duration]=({win:[660,.09],loss:[180,.11],unlock:[880,.14],tap:[420,.045],deal:[500,.05],chip:[520,.04],spin:[360,.13],level:[950,.17]})[kind]||[420,.045];
     osc.frequency.value=freq;
     osc.type=kind==='loss'?'sawtooth':'sine';
     gain.gain.setValueAtTime(.0001,ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(.06,ctx.currentTime+.01);
+    gain.gain.exponentialRampToValueAtTime(Math.max(.0002,.065*(getMeta().volume??.65)),ctx.currentTime+.01);
     gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+duration);
     osc.connect(gain).connect(ctx.destination);
     osc.start();
@@ -70,6 +70,22 @@ export function wireBetButtons({reserve=0}={}){
       input.value=button.dataset.betAdjust==='double'?Math.min(current*2,walletMax):Math.max(1,Math.floor(current/2));
     };
   });
+  const input=$('bet');
+  if(!input||document.getElementById('chipTray'))return;
+  const tray=document.createElement('div');
+  tray.id='chipTray';tray.className='chip-tray';tray.setAttribute('aria-label','Virtual betting chips');
+  tray.innerHTML='<span>BET CHIPS</span>'+[1,5,25,100,500,1000].map(v=>`<button type="button" class="chip" data-chip="${v}" aria-label="Add ${v} dollar chip"><b>${v>=1000?'1K':v}</b></button>`).join('')+'<button type="button" id="chipUndo" class="secondary">UNDO</button><button type="button" id="chipClear" class="secondary">RESET</button>';
+  input.closest('.controls')?.insertAdjacentElement('afterend',tray);
+  const previous=[];let firstChip=true;
+  input.addEventListener('input',()=>{firstChip=false;previous.length=0;});
+  tray.querySelectorAll('[data-chip]').forEach(button=>button.addEventListener('click',()=>{
+    if(input.disabled)return;
+    const value=Number(button.dataset.chip),before=Math.max(1,Number(input.value)||1);
+    const next=Math.min(10000,firstChip?value:before+value);
+    previous.push(before);input.value=next;firstChip=false;playTone('chip');
+  }));
+  tray.querySelector('#chipUndo').onclick=()=>{if(input.disabled)return;input.value=previous.pop()??25;playTone('chip');};
+  tray.querySelector('#chipClear').onclick=()=>{if(input.disabled)return;input.value=25;firstChip=true;previous.length=0;};
 }
 
 export function wagerControls(buttonText='PLAY ROUND',label='Wager ($)'){
