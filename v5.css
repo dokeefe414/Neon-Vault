@@ -71,3 +71,8 @@ body[data-card-back="royal"] .playing-card.back{background:repeating-linear-grad
 @media(max-width:900px){.v5-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.v5-bar-row{grid-template-columns:65px 1fr 85px;gap:7px}.v5-game-metric{grid-template-columns:1fr 1fr;gap:5px}}
 @media(max-width:570px){.v5-guide-grid,.v5-weekly-grid,.v5-shop-grid{grid-template-columns:1fr}.v5-page h2{font-size:29px}.v5-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.v5-practice{padding:16px}.v5-practice-cards{gap:7px}.v5-practice-cards select{max-width:100px}.v5-welcome{gap:11px;padding:14px}.v5-welcome .secondary{width:100%}.v5-welcome-icon{width:47px;height:47px;font-size:25px}.v5-welcome strong{font-size:17px}.v5-wheel-shell{width:200px;height:200px}.v5-wheel{width:192px;height:192px}.v5-wheel-label{font-size:8px}.chip-tray{gap:7px;padding:10px}.chip{width:45px;height:45px}.v5-bar-row{font-size:10px}.v5-game-metric{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.v5-wheel,.slot-cell.v5-stop,.playing-card,.chip{animation:none!important;transition:none!important}}
+
+/* v5.0.1: avatar picker stays in a single reachable row above profile form */
+.v5-avatars{display:flex;flex-wrap:nowrap;overflow-x:auto;max-width:100%;gap:9px;padding:8px 3px 15px;scroll-padding-inline:16px;overscroll-behavior-x:contain}
+.v5-avatar-button{flex:0 0 55px}
+@media(max-width:570px){.v5-avatars{margin-top:-5px}.v5-avatar-button{flex-basis:50px;width:50px;height:50px}}
