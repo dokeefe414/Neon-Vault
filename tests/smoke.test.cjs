@@ -82,7 +82,7 @@ const gamePolish=read('game-polish.css');
 assert.ok(gamePolish.includes('.blackjack-hand.active'),'Active Blackjack hand styling is missing');
 
 const serviceWorker=read('sw.js');
-assert.ok(serviceWorker.includes("const CACHE='neon-vault-v5.3'"),'v4 service-worker cache is missing');
+assert.ok(serviceWorker.includes("const CACHE='neon-vault-v5.3.1'"),'v4 service-worker cache is missing');
 assert.ok(serviceWorker.includes("'./src/app.js'"),'Service worker must cache the app entry point');
 assert.ok(serviceWorker.includes("'./game-polish.css'"),'Service worker must cache final game polish');
 assert.ok(serviceWorker.includes("event.request.mode==='navigate'"),'Offline navigation fallback must be request-type aware');

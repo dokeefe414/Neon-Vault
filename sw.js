@@ -1,4 +1,4 @@
-const CACHE='neon-vault-v5.3';
+const CACHE='neon-vault-v5.3.1';
 const CORE=[
   './','./index.html','./style.css','./creator.css','./pro.css','./game-polish.css','./mobile.css','./v5.css','./icon.svg','./manifest.webmanifest',
   './src/app.js','./src/core/utils.js','./src/core/random.js','./src/core/store.js','./src/core/rules.js','./src/core/strategy.js','./src/core/simulation.js',

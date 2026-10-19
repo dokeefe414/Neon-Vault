@@ -9,7 +9,7 @@ const spinSymbol=()=>weightedChoice(symbols.map(x=>({value:x.value,weight:x.weig
 const isActiveView=()=>document.querySelector('.nav[data-view="slots"]')?.classList.contains('active');
 
 export class SlotsGame{
-  constructor(){this.spinning=false;}
+  constructor(){this.spinning=false;this.lastBet=null;}
   hasActiveRound(){return this.spinning;}
   evaluateLine(grid,line,betPerLine){return evaluateSlotLine(grid,line,betPerLine);}
   render(){
@@ -17,9 +17,24 @@ export class SlotsGame{
     const meta=getMeta();
     const freeSpins=Math.max(0,Number(meta.freeSpins)||0);
     const freeSpinBet=Math.max(0,Number(meta.freeSpinBet)||0);
+    // Keep the most recent paid wager even when the screen is rebuilt or revisited.
+    if(!Number.isSafeInteger(this.lastBet)||this.lastBet<1||this.lastBet>10000){
+      const saved=Number(meta.slotsLastBet);
+      this.lastBet=Number.isSafeInteger(saved)&&saved>=1&&saved<=10000?saved:25;
+    }
     const blank=Array.from({length:15},(_,i)=>`<div class="slot-cell">${['🍒','🍋','🔔','💎','7️⃣'][i%5]}</div>`).join('');
     $('content').innerHTML=`<div class="game-panel" style="max-width:1100px"><span class="pill">VIRTUAL TABLE</span><h2 style="margin-top:16px">Neon Reels</h2><p>Five reels, three rows, seven paylines. ⭐ is wild. Three or more ✨ scatter symbols award 3 free spins.</p>${wagerControls('SPIN REELS')}<div class="slot-machine"><div class="level-row"><div><div class="pro-kicker">NEON REELS</div><h3 style="margin:4px 0">7 PAYLINES</h3></div><div class="free-spin-badge">FREE SPINS: <span id="freeSpins">${freeSpins}</span></div></div><div id="slotGrid" class="slot-grid">${blank}</div><div class="pro-grid two"><div class="payline-list"><strong>Paytable (5 across)</strong><br>🍒 30× · 🍋 35× · 🔔 50× · 💎 90× · 7️⃣ 200× · ⭐ 125×<br>3+ matching symbols from the left also pay.</div><div class="payline-list"><strong>Bonus</strong><br>⭐ substitutes for normal symbols.<br>3+ ✨ anywhere triggers 3 free spins.<br>Free spins keep the wager that triggered them.</div></div></div><div id="message" class="result"></div></div>`;
     wireBetButtons();
+    const betInput=$('bet');
+    if(freeSpins===0){
+      betInput.value=this.lastBet;
+      const rememberBet=()=>{
+        const value=Number(betInput.value);
+        if(Number.isSafeInteger(value)&&value>=1&&value<=10000)this.lastBet=value;
+      };
+      betInput.addEventListener('input',rememberBet);
+      betInput.addEventListener('change',rememberBet);
+    }
     if(freeSpins>0){
       $('bet').value=(freeSpinBet||2500)/100;
       $('bet').disabled=true;
@@ -45,6 +60,8 @@ export class SlotsGame{
     }else{
       bet=parseMainBet();if(bet===null)return;
       if(bet>getState().balance){toast('Not enough credits for that wager','loss');return;}
+      this.lastBet=bet/100;
+      meta.slotsLastBet=this.lastBet;
     }
 
     this.spinning=true;
@@ -81,6 +98,12 @@ export class SlotsGame{
       const bonus=scatters>=3?` · BONUS! ${scatters} scatters → +3 free spins`:'';
       if($('message'))$('message').innerHTML=`<div class="v52-result-banner"><div><small>${isFree?'FREE SPIN':'PAID SPIN'} · ${wins.length} PAYLINE${wins.length===1?'':'S'}</small><div><strong>${wins.length?`${money(payout)} returned`:'No payline win'}</strong></div><div class="hint">${bonus||'Five reels · seven ways to win'}</div></div><span class="v52-result-chip ${record.net>0?'positive':record.net<0?'negative':''}">NET ${record.net>=0?'+':''}${money(record.net)}</span></div>`;
       toast(`Slots: ${record.net>=0?'+':''}${money(record.net)} net`,record.net>0?'win':record.net<0?'loss':'tap');
+      // Restore editable paid-bet controls when the last free spin completes.
+      if(!freeSpins){
+        const input=$('bet');
+        if(input){input.disabled=false;input.value=this.lastBet;}
+        document.querySelectorAll('[data-bet-adjust]').forEach(btn=>btn.disabled=false);
+      }
       if($('play')){$('play').disabled=false;$('play').textContent=freeSpins?`FREE SPIN (${freeSpins})`:'SPIN REELS';}
     },duration);
   }

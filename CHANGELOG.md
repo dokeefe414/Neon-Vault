@@ -1,5 +1,13 @@
 # NEON VAULT Changelog
 
+## 5.3.1 — Slots Wager Memory
+
+- Slots retains the last paid wager after each spin rather than resetting to $25.
+- Chip and manual wager changes carry through screen rerenders, navigation, and reloads.
+- Free spins keep their triggering wager locked; after the bonus, the paid wager returns.
+- Added desktop/mobile Playwright regression tests for repeated and chip-selected wagers.
+
+
 ## 5.3.0 — Trivia Variety Expansion
 
 - Replaced the single 200-question bank with six distinct specialist expansions and a General pool drawing across every category.

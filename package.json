@@ -1,6 +1,6 @@
 {
   "name":"neon-vault",
-  "version":"5.3.0",
+  "version":"5.3.1",
   "private":true,
   "type":"module",
   "description":"A modular virtual-credit casino and progression game built with vanilla HTML, CSS, and JavaScript.",

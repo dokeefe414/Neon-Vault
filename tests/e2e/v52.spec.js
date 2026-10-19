@@ -57,3 +57,31 @@ test('v5.1: weekly Style Lounge link opens wardrobe directly',async({page})=>{
  await expect(page.locator('#pageTitle')).toHaveText('Style Lounge');
  await expect(page.locator('#playerName')).toBeVisible();
 });
+
+test('Slots keeps the exact last paid wager after repeated spins and navigation',async({page})=>{
+ await clean(page);await go(page,'slots');
+ await page.locator('#bet').fill('17');
+ await page.locator('#play').click();
+ await expect(page.locator('#message .v52-result-banner')).toBeVisible({timeout:5500});
+ await expect(page.locator('#bet')).toHaveValue('17');
+ await expect(page.locator('#play')).toBeEnabled();
+ await page.locator('#play').click();
+ await expect(page.locator('#play')).toBeEnabled({timeout:5500});
+ await expect(page.locator('#bet')).toHaveValue('17');
+ await go(page,'dice');
+ await go(page,'slots');
+ await expect(page.locator('#bet')).toHaveValue('17');
+ await page.reload();
+ await go(page,'slots');
+ await expect(page.locator('#bet')).toHaveValue('17');
+});
+
+test('Slots remembers chip-selected wagers across a completed spin',async({page})=>{
+ await clean(page);await go(page,'slots');
+ await page.locator('[data-chip="5"]').click();
+ await page.locator('[data-chip="25"]').click();
+ await expect(page.locator('#bet')).toHaveValue('30');
+ await page.locator('#play').click();
+ await expect(page.locator('#play')).toBeEnabled({timeout:5500});
+ await expect(page.locator('#bet')).toHaveValue('30');
+});
