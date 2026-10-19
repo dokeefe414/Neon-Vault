@@ -1,9 +1,9 @@
 import {$,money,escapeHtml} from '../core/utils.js';
-import {getMeta,getState,saveMeta,updateMeta} from '../core/store.js';
+import {getMeta,getState,saveMeta} from '../core/store.js';
 import {stats,levelInfo} from '../progression/progression.js';
 import {adviseBlackjack} from '../core/strategy.js';
 import {weeklyObjectives,weeklyState,claimWeekly} from '../progression/weekly.js';
-import {toast,applyPreferences} from './common.js';
+import {toast} from './common.js';
 import {blackjackGame} from '../games/blackjack.js';
 const avatars=['◆','♠','★','✦','⚡','🃏','🎲','👑','🦊','🐉'];
 const storeItems=[
@@ -51,7 +51,7 @@ function enhanceProfile(navigate){
  const c=getCosmetics(),host=$('content');if(!host)return;
  host.insertAdjacentHTML('afterbegin',`<section class="v5-identity pro-panel"><div class="v5-avatar">${escapeHtml(c.avatar)}</div><div><div class="pro-kicker">YOUR VAULT IDENTITY · ${escapeHtml(c.badge)}</div><h2 style="margin:6px 0">${escapeHtml(c.name)}</h2><p class="hint">Customize your avatar and rewards without using virtual bankroll credits.</p></div><button class="secondary" id="editIdentity">CUSTOMIZE →</button></section>`);
  document.getElementById('editIdentity').onclick=()=>navigate('wardrobe');
- const settings=host.querySelector('.pro-panel:last-of-type');
+ const settings=$('themeSelect')?.closest('.pro-panel');
  if(settings){
   settings.insertAdjacentHTML('beforeend',`<div class="settings-row"><div><strong>Sound volume</strong><div class="hint">Choose the intensity of card, chip, and win sounds.</div></div><label>Volume <input id="soundVolume" type="range" min="0" max="100" step="5" value="${Math.round((Number(getMeta().volume)??.65)*100)}"></label></div><div class="settings-row"><div><strong>Learn & explore</strong><div class="hint">Rules, Blackjack strategy, charts, and weekly goals.</div></div><div class="controls"><button class="secondary" id="openGuide">GUIDE</button><button class="secondary" id="openTrainer">TRAINER</button><button class="secondary" id="openAnalytics">ANALYTICS</button></div></div>`);
   document.getElementById('soundVolume').oninput=e=>{getMeta().volume=Number(e.target.value)/100;saveMeta();};

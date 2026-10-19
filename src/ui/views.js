@@ -1,7 +1,7 @@
 import {$,DAY,escapeHtml,localDateKey,money} from '../core/utils.js';
 import {getState,getMeta,saveMeta,profitSince,exportPayload,validateImport,replaceSave} from '../core/store.js';
 import {achievements,bankrollPoints,checkAchievements,dailyChallenge,levelInfo,stats} from '../progression/progression.js';
-import {applyPreferences,renderWallet,toast,wireBetButtons} from './common.js';
+import {applyPreferences,renderWallet,toast} from './common.js';
 
 const games=[
   ['blackjack','♠','Blackjack','Full table rules, side bets, split, double down, insurance, and surrender.'],

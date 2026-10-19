@@ -49,8 +49,11 @@ assert.ok(blackjack.includes('persistRound()'),'Blackjack round persistence serv
 assert.ok(blackjack.includes('loadRound()'),'Blackjack reload recovery is missing');
 
 const roulette=read('src/games/roulette.js');
-['dozen1','column1','mult:36','roulette-straight-win'].forEach(term=>assert.ok(roulette.includes(term),`Roulette feature missing: ${term}`));
+['dozen1','column1','rouletteOutcome','roulette-straight-win'].forEach(term=>assert.ok(roulette.includes(term),`Roulette feature missing: ${term}`));
 
+const engine=read('src/core/rules.js');
+assert.ok(engine.includes('mult:36'),'Roulette pure rule engine must pay 35:1 plus the returned wager');
+assert.ok(engine.includes('evaluateSlots'),'Slots pure evaluator must be exported');
 const slots=read('src/games/slots.js');
 ['7 PAYLINES','freeSpinBet','slot-bonus','Slots · Free Spin'].forEach(term=>assert.ok(slots.includes(term),`Slots feature missing: ${term}`));
 

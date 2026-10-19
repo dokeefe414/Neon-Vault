@@ -1,5 +1,4 @@
-import {getMeta,saveMeta,grant} from '../core/store.js';
-const WEEK=7*86400000;
+import {getMeta,saveMeta} from '../core/store.js';
 const defs=[
  {id:'play20',title:'Casino Explorer',desc:'Settle 20 games this week',event:'round',target:20},
  {id:'blackjack5',title:'Table Veteran',desc:'Win 5 Blackjack hands this week',event:'blackjack-win',target:5},
@@ -14,7 +13,7 @@ export function weeklyState(){
  return meta.weekly;
 }
 export function trackWeekly(event){
- const weekly=weeklyState(),meta=getMeta();
+ const weekly=weeklyState();
  for(const goal of defs)if(goal.event===event&&!weekly.claimed[goal.id]){
    weekly.progress[goal.id]=Math.min(goal.target,(weekly.progress[goal.id]||0)+1);
  }
