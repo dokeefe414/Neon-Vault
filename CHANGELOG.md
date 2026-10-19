@@ -1,5 +1,15 @@
 # NEON VAULT Changelog
 
+## 5.2.0 — The Casino Floor Polish
+
+- Redesigned Blackjack table hierarchy with dealer reveal state, stronger player-hand indicators, wager chips, and clear result pills.
+- Added explanatory Blackjack action tooltips and improved active-hand contrast.
+- Centered Roulette outcomes accurately beneath the wheel pointer and created a visual outcome summary.
+- Added structured Slots win summaries, bolder payline emphasis, and theme-aware machine highlights.
+- Refined chip trays, felt surfaces, responsive game panels, wallet typography, and accessibility/reduced motion.
+- Added mobile and desktop Playwright coverage for the v5.2 visuals and the v5.1 wager fixes.
+
+
 ## 5.1.0 — Stability and Accounting
 
 - Corrected chip-controlled Roulette wager persistence and added wager change propagation.

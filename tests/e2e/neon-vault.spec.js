@@ -78,7 +78,8 @@ test('roulette settles a spin and records one result',async({page})=>{
   await page.locator('#bet').fill('5');
   await page.locator('button[data-type="black"]').click();
   await page.locator('#play').click();
-  await expect(page.locator('#message')).toContainText(/\d+ (RED|BLACK|GREEN) · Black · (WIN|LOSS)/,{timeout:5000});
+  await expect(page.locator('#message')).toContainText(/\d+ (RED|BLACK|GREEN)/,{timeout:5000});
+  await expect(page.locator('#message')).toContainText(/WIN|LOSS/);
   const state=await persistedState(page);
   expect(state.history.filter(x=>x.game==='Roulette')).toHaveLength(1);
 });

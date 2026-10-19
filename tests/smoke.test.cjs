@@ -14,7 +14,7 @@ const required=[
   'src/app.js','src/core/utils.js','src/core/random.js','src/core/store.js','src/core/strategy.js','src/core/rules.js','src/core/simulation.js',
   'src/ui/common.js','src/ui/views.js','src/ui/v5.js','src/progression/progression.js','src/progression/session.js','src/progression/weekly.js','src/data/trivia.js',
   'src/games/blackjack.js','src/games/roulette.js','src/games/slots.js','src/games/dice.js','src/games/trivia.js',
-  'tests/rules.test.mjs','tests/v5.test.mjs','tests/e2e/neon-vault.spec.js','tests/e2e/v5.spec.js'
+  'tests/rules.test.mjs','tests/v5.test.mjs','tests/stability.test.mjs','tests/e2e/v52.spec.js','tests/e2e/neon-vault.spec.js','tests/e2e/v5.spec.js'
 ];
 required.forEach(file=>assert.ok(fs.existsSync(path.join(root,file)),`Missing required v4 file: ${file}`));
 
@@ -81,7 +81,7 @@ const gamePolish=read('game-polish.css');
 assert.ok(gamePolish.includes('.blackjack-hand.active'),'Active Blackjack hand styling is missing');
 
 const serviceWorker=read('sw.js');
-assert.ok(serviceWorker.includes("const CACHE='neon-vault-v5'"),'v4 service-worker cache is missing');
+assert.ok(serviceWorker.includes("const CACHE='neon-vault-v5.2'"),'v4 service-worker cache is missing');
 assert.ok(serviceWorker.includes("'./src/app.js'"),'Service worker must cache the app entry point');
 assert.ok(serviceWorker.includes("'./game-polish.css'"),'Service worker must cache final game polish');
 assert.ok(serviceWorker.includes("event.request.mode==='navigate'"),'Offline navigation fallback must be request-type aware');

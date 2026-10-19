@@ -79,7 +79,7 @@ export class SlotsGame{
       if(el){el.classList.remove('spinning');el.innerHTML=Array.from({length:15},(_,i)=>`<div class="slot-cell ${wins.some(win=>paylines[win.index][i%5]===Math.floor(i/5)&&i%5<win.count)?'v5-win':''}">${grid[Math.floor(i/5)][i%5]}</div>`).join('');}
       if($('freeSpins'))$('freeSpins').textContent=freeSpins;
       const bonus=scatters>=3?` · BONUS! ${scatters} scatters → +3 free spins`:'';
-      if($('message'))$('message').textContent=wins.length?`${wins.length} payline${wins.length>1?'s':''} won · ${money(payout)} returned${bonus}`:`No payline win${bonus}`;
+      if($('message'))$('message').innerHTML=`<div class="v52-result-banner"><div><small>${isFree?'FREE SPIN':'PAID SPIN'} · ${wins.length} PAYLINE${wins.length===1?'':'S'}</small><div><strong>${wins.length?`${money(payout)} returned`:'No payline win'}</strong></div><div class="hint">${bonus||'Five reels · seven ways to win'}</div></div><span class="v52-result-chip ${record.net>0?'positive':record.net<0?'negative':''}">NET ${record.net>=0?'+':''}${money(record.net)}</span></div>`;
       toast(`Slots: ${record.net>=0?'+':''}${money(record.net)} net`,record.net>0?'win':record.net<0?'loss':'tap');
       if($('play')){$('play').disabled=false;$('play').textContent=freeSpins?`FREE SPIN (${freeSpins})`:'SPIN REELS';}
     },duration);

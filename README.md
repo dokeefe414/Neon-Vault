@@ -1,14 +1,14 @@
-# NEON VAULT v5 — The Premier Experience
+# NEON VAULT v5.2 — The Premier Experience
 
 **[Play NEON VAULT](https://dokeefe414.github.io/Neon-Vault/)** · Created by Daniel O'Keefe
 
 NEON VAULT is a responsive, installable, offline-capable browser casino **simulation using fictional credits only**. No real-money wagering, deposits, purchases, cash prizes, or credits of monetary value.
 
-## What's new in v5
+## What's new in v5.1 and v5.2
 
-- Premium Blackjack appearance, selectable bet chips, inline educational strategy hints and a standalone strategy trainer.
-- Animated European Roulette wheel, number betting board and outside bet options.
-- Five-reel Slots animation with staggered stops, seven paylines, wilds, scatters and free spins.
+- Refined Blackjack table with staged card CSS, dealer/player separation, active-hand highlights, payout chips, betting tray, inline educational strategy hints and a standalone strategy trainer.
+- Animated European Roulette wheel with an aligned result pocket, number betting board, outside bets and clarified win/loss summaries.
+- Five-reel Slots animation with staggered stops, improved payline highlights, summarized results, wilds, scatters and free spins.
 - Player name/avatar, cosmetic card backs/table felts/profile badges, and optional XP/style-token rewards.
 - Optional weekly challenges, detailed analytics, accessible tutorial, sound volume and reduced-motion settings.
 - Save export/import, v5 migration compatibility, session tracking, PWA/offline support, and Blackjack reload recovery.
@@ -40,6 +40,10 @@ Serve with `python3 -m http.server 4173` and open http://localhost:4173 for loca
 - `src/progression/`: achievements, daily and weekly challenges, session analytics
 - `v5.css`: additional visual system, animations, and cosmetics
 - `tests/`: smoke, rule, simulation, and Playwright tests
+
+## Stability and save protections
+
+v5.1 commits completed Dice, Roulette and Slots bets as single durable wallet updates, prevents duplicate settlement when a unique ID is supplied, and warns if a second tab changes the same local wallet or profile. This is optimistic conflict detection, not a substitute for an atomic server-side transaction. Blackjack's in-progress wager and additional side bets remain a distinct persisted-hand workflow.
 
 ## Data / integrity
 

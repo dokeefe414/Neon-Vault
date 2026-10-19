@@ -47,7 +47,8 @@ export class RouletteGame{
     this.render();
     const disc=$('rouletteDisc');
     const sector=360/rouletteOrder.length,index=rouletteOrder.indexOf(number);
-    const offset=((360-index*sector-(this.rotation%360))%360+360)%360;
+    // Center the chosen wheel pocket beneath the fixed top pointer.
+    const offset=((360-(index+.5)*sector-(this.rotation%360))%360+360)%360;
     this.rotation+=360*5+offset;
     if(disc){if(getMeta().reduceMotion)disc.style.transition='none';requestAnimationFrame(()=>{disc.style.transform=`rotate(${this.rotation}deg)`;});}
     const finish=()=>{
@@ -55,7 +56,7 @@ export class RouletteGame{
       if(!isActiveView())return;
       const ball=$('rouletteBall');
       if(ball){ball.classList.remove('spinning');ball.textContent=number;ball.style.color=number===0?'var(--mint)':color(number)==='red'?'#ff8ba0':'#fff';}
-      if($('message'))$('message').textContent=`${number} ${color(number).toUpperCase()} · ${label} · ${result.win?'WIN':'LOSS'}`;
+      if($('message'))$('message').innerHTML=`<div class="v52-result-banner"><div><small>EUROPEAN WHEEL · ${label}</small><div><strong>${number} ${color(number).toUpperCase()}</strong></div></div><span class="v52-result-chip ${result.win?'positive':'negative'}">${result.win?'WIN':'LOSS'} · ${record.net>=0?'+':''}${money(record.net)}</span></div>`;
       toast(`Roulette: ${record.net>=0?'+':''}${money(record.net)} net`,result.win?'win':'loss');
       if($('play'))$('play').disabled=false;
       document.querySelectorAll('[data-number],[data-type]').forEach(btn=>btn.disabled=false);
