@@ -1,6 +1,6 @@
 import {$,money} from '../core/utils.js';
 import {weightedChoice} from '../core/random.js';
-import {getState,getMeta,saveMeta,debit,settle} from '../core/store.js';
+import {getState,getMeta,saveMeta,settleWager} from '../core/store.js';
 import {parseMainBet,renderWallet,toast,wagerControls,wireBetButtons} from '../ui/common.js';
 import {signal} from '../progression/progression.js';
 import {slotSymbols as symbols,paylines,evaluateSlotLine,evaluateSlots} from '../core/rules.js';
@@ -48,7 +48,7 @@ export class SlotsGame{
     }
 
     this.spinning=true;
-    if(isFree)freeSpins--;else debit(bet,'Slots wager');
+    if(isFree)freeSpins--;
     const grid=Array.from({length:3},()=>Array.from({length:5},spinSymbol));
     const {wins,scatters,payout}=evaluateSlots(grid,bet);
     if(scatters>=3){
@@ -59,7 +59,7 @@ export class SlotsGame{
     if(freeSpins===0)freeSpinBet=0;
     meta.freeSpins=freeSpins;meta.freeSpinBet=freeSpinBet;saveMeta();
 
-    const record=settle(isFree?'Slots · Free Spin':'Slots',isFree?0:bet,payout,{quiet:true,metadata:{freeSpin:isFree,scatters}});
+    const record=settleWager(isFree?'Slots · Free Spin':'Slots',isFree?0:bet,payout,{quiet:true,metadata:{freeSpin:isFree,scatters,spinBet:bet}});
     if(record.net>0)signal('slots-win');
     this.render();
     const gridEl=$('slotGrid');

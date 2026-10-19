@@ -1,6 +1,6 @@
 import {$,money} from '../core/utils.js';
 import {randomInt} from '../core/random.js';
-import {getState,debit,settle} from '../core/store.js';
+import {getState,settleWager} from '../core/store.js';
 import {parseMainBet,renderWallet,toast,wagerControls,wireBetButtons} from '../ui/common.js';
 
 export const diceGame={
@@ -17,13 +17,12 @@ export const diceGame={
     const bet=parseMainBet();if(bet===null)return;
     if(bet>getState().balance){toast('Not enough credits for that wager','loss');return;}
     const pick=$('pick').value;
-    debit(bet,'Dice wager');
-    const a=randomInt(6)+1,b=randomInt(6)+1,sum=a+b;
+     const a=randomInt(6)+1,b=randomInt(6)+1,sum=a+b;
     const win=pick==='high'?sum>=8:sum<=6;
     const faces=['⚀','⚁','⚂','⚃','⚄','⚅'];
     $('table').querySelector('.dice-display').textContent=`${faces[a-1]} ${faces[b-1]}`;
     $('message').textContent=`Rolled ${sum} — ${win?'WIN':'LOSS'}`;
-    const result=settle('Dice',bet,win?bet*2:0,{quiet:true});
+    const result=settleWager('Dice',bet,win?bet*2:0,{quiet:true,metadata:{die1:a,die2:b,prediction:pick}});
     toast(`Dice: ${result.net>=0?'+':''}${money(result.net)} net`,win?'win':'loss');
     renderWallet();
   }

@@ -1,5 +1,16 @@
 # NEON VAULT Changelog
 
+## 5.1.0 — Stability and Accounting
+
+- Corrected chip-controlled Roulette wager persistence and added wager change propagation.
+- Fixed the hard-10 Blackjack strategy tip for a pair of fives against a strong dealer card.
+- Fixed the weekly calendar to calculate the Monday key in local time; weekly Style Lounge now opens the actual wardrobe.
+- Dice, Roulette, and Slots now atomically commit a finished wager/result as one local wallet transaction.
+- Added idempotent settlement keys and proactive optimistic conflict detection for stale tabs, plus a visible cross-tab reload warning.
+- Strengthened JSON save import validation and limited user-uploaded save file size.
+- Added deterministic wallet, save, strategy and weekly-date regression tests.
+
+
 ## 5.0.0 — The Premier Experience
 
 - Enhanced Blackjack visuals, optional inline basic-strategy hints, and a full strategy practice screen.

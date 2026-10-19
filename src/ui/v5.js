@@ -32,7 +32,7 @@ export function renderV5View(view,navigate){
  if(view==='trainer'){renderTrainer();return true;}
  if(view==='analytics'){renderAnalytics();return true;}
  if(view==='wardrobe'){renderWardrobe();return true;}
- if(view==='weekly'){renderWeekly();return true;}
+ if(view==='weekly'){renderWeekly(navigate);return true;}
  return false;
 }
 export function enhanceV5View(view,navigate){
@@ -119,9 +119,9 @@ function renderWardrobe(){
  document.querySelectorAll('[data-avatar]').forEach(b=>b.onclick=()=>{c.avatar=b.dataset.avatar;saveMeta();renderWardrobe();});
  document.querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{const item=storeItems.find(i=>i.id===b.dataset.item);if(!item)return;const owned=c.owned||[];if(!owned.includes(item.id)){if((Number(meta.cosmeticTokens)||0)<item.cost){toast('Not enough style tokens','loss');return;}meta.cosmeticTokens-=item.cost;owned.push(item.id);c.owned=owned;}c[item.type]=item.value;saveMeta();applyCosmetics();renderWardrobe();toast('Cosmetic equipped','win');});
 }
-function renderWeekly(){
+function renderWeekly(navigate){
  const state=weeklyState(),meta=getMeta();
  $('content').innerHTML=`<section class="v5-page"><div class="v5-kicker">OPTIONAL WEEKLY GOALS</div><h2>Weekly challenges</h2><p class="hint">Goals reset each Monday in your local timezone. Claiming a completed goal awards 150 XP and 5 style tokens—not real money or prizes.</p><div class="v5-weekly-grid">${weeklyObjectives.map(goal=>{const progress=state.progress[goal.id]||0,claimed=!!state.claimed[goal.id],pct=Math.min(100,progress/goal.target*100);return `<article class="pro-panel"><div class="pro-kicker">WEEK OF ${escapeHtml(state.key)}</div><h3>${goal.title}</h3><p class="hint">${goal.desc}</p><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div><div class="v5-weekly-footer"><span>${progress} / ${goal.target}</span><button class="${claimed?'secondary':'primary'}" data-claim="${goal.id}" ${claimed||progress<goal.target?'disabled':''}>${claimed?'CLAIMED':progress>=goal.target?'CLAIM +150 XP':'IN PROGRESS'}</button></div></article>`;}).join('')}</div><p class="hint">Style tokens available: ${Number(meta.cosmeticTokens)||0}. <a href="#wardrobe" id="wardrobeFromWeekly">Open Style Lounge</a>.</p></section>`;
- document.querySelectorAll('[data-claim]').forEach(b=>b.onclick=()=>{if(claimWeekly(b.dataset.claim)){toast('Weekly reward claimed: +150 XP and +5 style tokens','unlock');renderWeekly();}});
- $('wardrobeFromWeekly').onclick=e=>{e.preventDefault();document.querySelector('button.nav[data-view="profile"]')?.click();};
+ document.querySelectorAll('[data-claim]').forEach(b=>b.onclick=()=>{if(claimWeekly(b.dataset.claim)){toast('Weekly reward claimed: +150 XP and +5 style tokens','unlock');renderWeekly(navigate);}});
+ $('wardrobeFromWeekly').onclick=e=>{e.preventDefault();navigate('wardrobe');};
 }

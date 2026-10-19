@@ -84,6 +84,16 @@ function normalizeMeta(raw){
 let state=validateState(parseJSON(STATE_KEY,freshState));
 let meta=normalizeMeta(parseJSON(META_KEY,freshMeta));
 
+// A stale tab must never silently overwrite a newer browser-local save.
+// This is optimistic conflict detection, not an atomic multi-tab database lock.
+const persisted={state:localStorage.getItem(STATE_KEY),meta:localStorage.getItem(META_KEY)};
+export class StaleSaveError extends Error{
+  constructor(){super('NEON VAULT progress changed in another tab. Reload this tab before playing.');this.name='StaleSaveError';}
+}
+function assertFresh(which){
+  const key=which==='state'?STATE_KEY:META_KEY;
+  if(localStorage.getItem(key)!==persisted[which])throw new StaleSaveError();
+}
 const listeners=new Set();
 function emit(type,payload={}){listeners.forEach(listener=>listener({type,payload,state,meta}));}
 
@@ -92,14 +102,20 @@ export function getState(){return state;}
 export function getMeta(){return meta;}
 
 export function saveState(){
+  assertFresh('state');
   state.saveVersion=SAVE_VERSION;
-  localStorage.setItem(STATE_KEY,JSON.stringify(state));
+  const raw=JSON.stringify(state);
+  localStorage.setItem(STATE_KEY,raw);
+  persisted.state=raw;
   emit('state-saved');
 }
 
 export function saveMeta(){
+  assertFresh('meta');
   meta.saveVersion=SAVE_VERSION;
-  localStorage.setItem(META_KEY,JSON.stringify(meta));
+  const raw=JSON.stringify(meta);
+  localStorage.setItem(META_KEY,raw);
+  persisted.meta=raw;
   emit('meta-saved');
 }
 
@@ -108,6 +124,7 @@ export function updateMeta(mutator){mutator(meta);meta=normalizeMeta(meta);saveM
 export function canAfford(cents){return Number.isSafeInteger(cents)&&cents>=0&&state.balance>=cents;}
 
 export function debit(cents,reason='Wager'){
+  assertFresh('state');
   if(!Number.isSafeInteger(cents)||cents<0)throw new RangeError('Invalid debit');
   if(state.balance<cents)throw new Error(`Not enough credits for ${reason}`);
   state.balance-=cents;
@@ -115,11 +132,32 @@ export function debit(cents,reason='Wager'){
   emit('wallet-debit',{cents,reason});
 }
 
-export function settle(game,bet,payout,{quiet=false,metadata={}}={}){
-  if(!Number.isSafeInteger(bet)||bet<0||!Number.isSafeInteger(payout)||payout<0)throw new RangeError('Invalid settlement');
+export function settlementRecord(id){return id?state.history.find(item=>item.settlementId===id)||null:null;}
+function checkAmount(value){return Number.isSafeInteger(value)&&value>=0;}
+export function settle(game,bet,payout,{quiet=false,metadata={},id}={}){
+  assertFresh('state');
+  if(id&&settlementRecord(id))return settlementRecord(id);
+  if(!checkAmount(bet)||!checkAmount(payout)||!Number.isSafeInteger(state.balance+payout))throw new RangeError('Invalid settlement');
   const at=Date.now(),net=payout-bet;
   state.balance+=payout;
   const record={at,game,bet,payout,net,...metadata};
+  if(id)record.settlementId=id;
+  state.ledger.push({at,net,game});
+  state.history.push(record);
+  saveState();
+  emit('settled',{record,quiet});
+  return record;
+}
+
+/** For known-outcome games, wager and payout are committed with one save. */
+export function settleWager(game,bet,payout,{quiet=false,metadata={},id}={}){
+  assertFresh('state');
+  if(id&&settlementRecord(id))return settlementRecord(id);
+  if(!checkAmount(bet)||!checkAmount(payout)||bet>state.balance||!Number.isSafeInteger(state.balance-bet+payout))throw new RangeError('Invalid wager settlement');
+  const at=Date.now(),net=payout-bet;
+  const record={at,game,bet,payout,net,...metadata};
+  if(id)record.settlementId=id;
+  state.balance+=net;
   state.ledger.push({at,net,game});
   state.history.push(record);
   saveState();
@@ -128,7 +166,9 @@ export function settle(game,bet,payout,{quiet=false,metadata={}}={}){
 }
 
 export function grant(cents,label='Reward'){
+  assertFresh('state');
   if(!Number.isSafeInteger(cents)||cents<=0)return null;
+  if(!Number.isSafeInteger(state.balance+cents))throw new RangeError('Invalid credit balance');
   const at=Date.now();
   state.balance+=cents;
   const record={at,game:label,bet:0,payout:cents,net:cents};
@@ -140,6 +180,7 @@ export function grant(cents,label='Reward'){
 }
 
 export function replaceSave(nextState,nextMeta){
+  assertFresh('state');assertFresh('meta');
   state=validateState(nextState);
   meta=normalizeMeta(nextMeta||freshMeta());
   saveState();
@@ -156,8 +197,13 @@ export function exportPayload(){return{app:'NEON VAULT',version:SAVE_VERSION,exp
 
 export function validateImport(payload){
   const candidate=payload?.state||payload;
-  if(!candidate||!Number.isSafeInteger(candidate.balance)||candidate.balance<0||!Array.isArray(candidate.history)||!Array.isArray(candidate.ledger))throw new Error('Invalid Neon Vault save');
-  return{state:validateState(candidate),meta:normalizeMeta(payload?.meta||freshMeta())};
+  if(!candidate||!Number.isSafeInteger(candidate.balance)||candidate.balance<0||!Array.isArray(candidate.history)||!Array.isArray(candidate.ledger)||candidate.history.length>50000||candidate.ledger.length>50000)throw new Error('Invalid Neon Vault save');
+  const validEntry=item=>item&&typeof item==='object'&&typeof item.game==='string'&&item.game.length>0&&item.game.length<=120&&Number.isFinite(item.at)&&item.at>=0&&Number.isSafeInteger(item.net);
+  if(!candidate.ledger.every(validEntry))throw new Error('Invalid ledger entries');
+  if(!candidate.history.every(item=>validEntry(item)&&checkAmount(item.bet)&&checkAmount(item.payout)&&item.payout-item.bet===item.net))throw new Error('Invalid game history');
+  const inputMeta=payload?.meta||freshMeta();
+  if(!inputMeta||typeof inputMeta!=='object'||Array.isArray(inputMeta))throw new Error('Invalid player profile');
+  return{state:validateState(candidate),meta:normalizeMeta(inputMeta)};
 }
 
 export function walletSummary(){return money(state.balance);}

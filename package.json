@@ -1,6 +1,6 @@
 {
   "name":"neon-vault",
-  "version":"5.0.0",
+  "version":"5.1.0",
   "private":true,
   "type":"module",
   "description":"A modular virtual-credit casino and progression game built with vanilla HTML, CSS, and JavaScript.",
@@ -9,7 +9,7 @@
     "lint":"eslint src tests playwright.config.js sw.js",
     "format":"prettier --write . --ignore-path .gitignore",
     "format:check":"prettier --check src tests playwright.config.js sw.js",
-    "test":"node tests/smoke.test.cjs && node --test tests/rules.test.mjs tests/v5.test.mjs",
+    "test":"node tests/smoke.test.cjs && node --test tests/rules.test.mjs tests/v5.test.mjs tests/stability.test.mjs",
     "test:e2e":"playwright test",
     "test:e2e:desktop":"playwright test --project=desktop-chromium",
     "test:e2e:mobile":"playwright test --project=mobile-chromium",

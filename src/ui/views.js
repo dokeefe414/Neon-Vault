@@ -64,7 +64,7 @@ export function renderProfile(){
   $('themeSelect').onchange=e=>{meta.theme=e.target.value;saveMeta();applyPreferences();};
   $('exportSave').onclick=()=>{const blob=new Blob([JSON.stringify(exportPayload(),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`neon-vault-save-${localDateKey()}.json`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);toast('Save exported');};
   $('importBtn').onclick=()=>$('importFile').click();
-  $('importFile').onchange=e=>{const file=e.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{const parsed=validateImport(JSON.parse(reader.result));if(!confirm('Import this save and replace the current local Neon Vault progress?'))return;replaceSave(parsed.state,parsed.meta);location.reload();}catch{toast('That file is not a valid Neon Vault save','loss');}};reader.readAsText(file);};
+  $('importFile').onchange=e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>5*1024*1024){toast('Save file is too large (5 MB limit)','loss');return;}const reader=new FileReader();reader.onload=()=>{try{const parsed=validateImport(JSON.parse(reader.result));if(!confirm('Import this save and replace the current local Neon Vault progress?'))return;replaceSave(parsed.state,parsed.meta);location.reload();}catch{toast('That file is not a valid Neon Vault save','loss');}};reader.readAsText(file);};
   wireChart();
 }
 

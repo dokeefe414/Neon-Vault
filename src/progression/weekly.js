@@ -1,4 +1,5 @@
 import {getMeta,saveMeta} from '../core/store.js';
+import {localDateKey} from '../core/utils.js';
 const defs=[
  {id:'play20',title:'Casino Explorer',desc:'Settle 20 games this week',event:'round',target:20},
  {id:'blackjack5',title:'Table Veteran',desc:'Win 5 Blackjack hands this week',event:'blackjack-win',target:5},
@@ -6,7 +7,11 @@ const defs=[
  {id:'roulette5',title:'Wheel Watcher',desc:'Win 5 Roulette bets this week',event:'roulette-win',target:5}
 ];
 export const weeklyObjectives=defs;
-export function weekKey(date=new Date()){const d=new Date(date.getFullYear(),date.getMonth(),date.getDate());const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);return d.toISOString().slice(0,10);}
+export function weekKey(date=new Date()){
+ const monday=new Date(date.getFullYear(),date.getMonth(),date.getDate());
+ monday.setDate(monday.getDate()-(monday.getDay()+6)%7);
+ return localDateKey(monday);
+}
 export function weeklyState(){
  const meta=getMeta(),key=weekKey();
  if(!meta.weekly||meta.weekly.key!==key){meta.weekly={key,progress:{},claimed:{}};saveMeta();}

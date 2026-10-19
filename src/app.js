@@ -100,6 +100,17 @@ document.querySelectorAll('.nav,.dock-nav').forEach(button=>button.addEventListe
 subscribe(({type})=>{if(type==='save-replaced')renderCurrent();else if(type==='wallet-debit'||type==='state-saved')renderWallet();});
 window.addEventListener('error',event=>console.error('NEON VAULT runtime error',event.error||event.message));
 window.addEventListener('unhandledrejection',event=>console.error('NEON VAULT promise rejection',event.reason));
+// Warn before a stale tab can overwrite local progress changed elsewhere.
+window.addEventListener('storage',event=>{
+  if(!['neon-vault-save-v1','neon-vault-meta-v2'].includes(event.key))return;
+  if(document.getElementById('externalSaveNotice'))return;
+  const notice=document.createElement('div');
+  notice.id='externalSaveNotice';notice.className='nv-save-warning';notice.setAttribute('role','alertdialog');
+  notice.setAttribute('aria-label','Progress updated in another tab');
+  notice.innerHTML='<strong>Progress changed in another tab</strong><p>Reload to use the latest virtual wallet and settings. This tab will not overwrite the newer save.</p><button type="button" class="primary" id="reloadExternalSave">RELOAD LATEST SAVE</button>';
+  document.body.appendChild(notice);
+  document.getElementById('reloadExternalSave').onclick=()=>location.reload();
+});
 
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(error=>console.warn('Service worker registration skipped',error)));
 

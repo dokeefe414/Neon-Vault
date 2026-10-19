@@ -1,6 +1,6 @@
 import {$,money} from '../core/utils.js';
 import {randomInt} from '../core/random.js';
-import {getState,debit,settle,getMeta} from '../core/store.js';
+import {getState,settleWager,getMeta} from '../core/store.js';
 import {parseMainBet,renderWallet,toast,wagerControls,wireBetButtons} from '../ui/common.js';
 import {signal} from '../progression/progression.js';
 import {rouletteColor,rouletteOutcome,rouletteOrder} from '../core/rules.js';
@@ -28,7 +28,9 @@ export class RouletteGame{
     $('content').innerHTML=`<div class="game-panel" style="max-width:1100px"><span class="pill">VIRTUAL TABLE</span><h2 style="margin-top:16px">Roulette</h2><p>European single-zero roulette. Straight numbers pay 35:1, dozens/columns pay 2:1, and even-money bets pay 1:1.</p>${wagerControls('SPIN WHEEL')}<div class="roulette-layout"><div><div class="roulette-board">${board}</div><p class="hint">Tap any number for a straight-up bet.</p></div><aside class="pro-panel"><div class="pro-kicker">SELECTED BET</div><div class="pro-value" style="font-size:24px">${this.label()}</div>${wheel}<div class="controls" style="margin:12px 0">${types}</div><p class="hint">0 is green and loses all outside bets.</p></aside></div><div id="message" class="result"></div></div>`;
     wireBetButtons();
     $('bet').value=this.wagerInput;
-    $('bet').addEventListener('input',e=>{this.wagerInput=Number(e.target.value)||1;});
+    const syncWager=e=>{this.wagerInput=Number(e.target.value)||1;};
+    $('bet').addEventListener('input',syncWager);
+    $('bet').addEventListener('change',syncWager);
     document.querySelectorAll('[data-number]').forEach(btn=>btn.onclick=()=>{if(this.spinning)return;this.wagerInput=Number($('bet').value)||25;this.pick={type:'number',value:Number(btn.dataset.number)};this.render();});
     document.querySelectorAll('[data-type]').forEach(btn=>btn.onclick=()=>{if(this.spinning)return;this.wagerInput=Number($('bet').value)||25;this.pick={type:btn.dataset.type,value:null};this.render();});
     $('play').disabled=this.spinning;
@@ -40,8 +42,7 @@ export class RouletteGame{
     if(bet>getState().balance){toast('Not enough credits for that wager','loss');return;}
     const pick={...this.pick},label=this.label(pick),number=randomInt(37),result=this.outcome(number,pick),payout=result.win?bet*result.mult:0;
     this.spinning=true;
-    debit(bet,'Roulette wager');
-    const record=settle('Roulette',bet,payout,{quiet:true,metadata:{betType:pick.type,betValue:pick.value,result:number}});
+    const record=settleWager('Roulette',bet,payout,{quiet:true,metadata:{betType:pick.type,betValue:pick.value,result:number}});
     if(result.win){signal('roulette-win');if(pick.type==='number')signal('roulette-straight-win');}
     this.render();
     const disc=$('rouletteDisc');

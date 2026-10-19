@@ -27,7 +27,8 @@ export function adviseBlackjack(cards,dealerUp,{canSplit=true,canDouble=true,can
   if(pair&&canSplit){
     const r=ranks[0];
     if(r==='A'||r==='8')return make('SPLIT',r==='A'?'Two aces are stronger as separate hands.':'Splitting 8s avoids a weak hard 16.');
-    if(['10','J','Q','K','5'].includes(r))return make(r==='5'&&canDouble&&d>=2&&d<=9?'DOUBLE':'STAND',r==='5'?'Treat a pair of 5s as hard 10.':'Keep a strong 20 together.');
+    if(['10','J','Q','K'].includes(r))return make('STAND','Keep a strong 20 together.');
+    // A pair of 5s is hard 10, not a standing pair; use the hard-total table below.
     if(r==='9')return make([7,10,11].includes(d)?'STAND':'SPLIT','9s perform best split against most dealer upcards.');
     if(r==='7')return make(d<=7?'SPLIT':'HIT','7s split against weak dealer cards.');
     if(r==='6')return make(d>=2&&d<=6?'SPLIT':'HIT','Split 6s against dealer 2–6.');

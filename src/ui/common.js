@@ -60,6 +60,7 @@ export function parseSideBet(id,label){
 }
 
 export function wireBetButtons({reserve=0}={}){
+  const notifyChanged=input=>input.dispatchEvent(new Event('change',{bubbles:true}));
   document.querySelectorAll('[data-bet-adjust]').forEach(button=>{
     button.onclick=()=>{
       const input=$('bet');
@@ -68,6 +69,7 @@ export function wireBetButtons({reserve=0}={}){
       const available=Math.max(0,getState().balance-reserve);
       const walletMax=Math.max(1,Math.min(10000,Math.floor(available/100)));
       input.value=button.dataset.betAdjust==='double'?Math.min(current*2,walletMax):Math.max(1,Math.floor(current/2));
+      notifyChanged(input);
     };
   });
   const input=$('bet');
@@ -82,10 +84,10 @@ export function wireBetButtons({reserve=0}={}){
     if(input.disabled)return;
     const value=Number(button.dataset.chip),before=Math.max(1,Number(input.value)||1);
     const next=Math.min(10000,firstChip?value:before+value);
-    previous.push(before);input.value=next;firstChip=false;playTone('chip');
+    previous.push(before);input.value=next;firstChip=false;notifyChanged(input);playTone('chip');
   }));
-  tray.querySelector('#chipUndo').onclick=()=>{if(input.disabled)return;input.value=previous.pop()??25;playTone('chip');};
-  tray.querySelector('#chipClear').onclick=()=>{if(input.disabled)return;input.value=25;firstChip=true;previous.length=0;};
+  tray.querySelector('#chipUndo').onclick=()=>{if(input.disabled)return;input.value=previous.pop()??25;notifyChanged(input);playTone('chip');};
+  tray.querySelector('#chipClear').onclick=()=>{if(input.disabled)return;input.value=25;firstChip=true;previous.length=0;notifyChanged(input);};
 }
 
 export function wagerControls(buttonText='PLAY ROUND',label='Wager ($)'){
