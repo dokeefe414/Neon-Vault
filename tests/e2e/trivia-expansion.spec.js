@@ -25,8 +25,11 @@ test('specialized category avoids repeats across new runs and reloads',async({pa
   expect(questions.length).toBe((i+1)*10);
   expect(new Set(questions).size).toBe(questions.length);
   previous=questions;
-  if(i===1)await page.reload();
-  await page.locator('#restartTrivia').click();
+  if(i===1){
+   await page.reload();
+   if(await page.locator('.nav[data-view="trivia"]:visible').count())await page.locator('.nav[data-view="trivia"]:visible').click();
+   else await page.locator('.dock-nav[data-view="trivia"]:visible').click();
+  }else if(i<3)await page.locator('#restartTrivia').click();
  }
  expect(previous.length).toBe(40);
  await expect(page.locator('#triviaPoolSummary')).toContainText('unseen of');
