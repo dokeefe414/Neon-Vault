@@ -76,7 +76,7 @@ export class SlotsGame{
     if(freeSpins===0)freeSpinBet=0;
     meta.freeSpins=freeSpins;meta.freeSpinBet=freeSpinBet;saveMeta();
 
-    const record=settleWager(isFree?'Slots · Free Spin':'Slots',isFree?0:bet,payout,{quiet:true,metadata:{freeSpin:isFree,scatters,spinBet:bet}});
+    const record=settleWager(isFree?'Slots · Free Spin':'Slots',isFree?0:bet,payout,{quiet:true,metadata:{freeSpin:isFree,scatters,spinBet:bet,grid,winningLines:wins.map(w=>w.index)}});
     if(record.net>0)signal('slots-win');
     this.render();
     const gridEl=$('slotGrid');

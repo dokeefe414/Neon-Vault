@@ -1,5 +1,30 @@
 # NEON VAULT Changelog
 
+## 5.7.0 — Collector's Vault
+- Added more player avatars, collectible felt and card-back designs, and cosmetic titles.
+- Expanded the achievement catalog for long-term play and the new game types.
+- Added mobile and desktop regression tests for player customization and new achievements.
+
+## 5.6.0 — Baccarat & Video Poker
+- New eight-deck Punto Banco Baccarat with natural hands, automatic third-card rules, and banker 5% commission.
+- New five-card Jacks or Better Video Poker with hold/draw selection, full paytable and one-deck hands.
+- Both games integrate with the existing virtual-credit wallet, progression, records, and responsive navigation.
+- Added deterministic Baccarat / Poker payout, category, straight, and side-bet unit tests.
+- Video Poker does not debit an unfinished hand; the wager is settled only on Draw.
+
+## 5.5.0 — Records & Replays
+- Added a dedicated records screen with game filters, virtual wager/result history and recent sessions.
+- Blackjack hands now record starting cards, decisions, and finishing hands for inspectable replays.
+- Record replay details for Baccarat, Video Poker, Roulette, Dice and new Slots spins.
+- Added an entry point to records from the Profile and Progress hub.
+- Historical saved records remain supported; older results without card snapshots appear as summaries.
+
+## 5.4.0 — Casino Polish and Game Audits
+- More responsive Blackjack card-deal feedback and completed-hand result styling.
+- Added direct tests for Perfect Pairs and 21+3 side-bet payouts, plus math/edge-case tests for new table rules.
+- Refined game surface styling, accessible hold states, mobile card layouts, and reduced-motion behavior.
+
+
 ## 5.3.1 — Slots Wager Memory
 
 - Slots retains the last paid wager after each spin rather than resetting to $25.

@@ -5,21 +5,25 @@ import {adviseBlackjack} from '../core/strategy.js';
 import {weeklyObjectives,weeklyState,claimWeekly} from '../progression/weekly.js';
 import {toast} from './common.js';
 import {blackjackGame} from '../games/blackjack.js';
-const avatars=['◆','♠','★','✦','⚡','🃏','🎲','👑','🦊','🐉'];
+const avatars=['◆','♠','★','✦','⚡','🃏','🎲','👑','🦊','🐉','🦉','🦁','🐺','🦋','🐯','🦅','💎','🪐','🌙','🌈','🕹️','🎩'];
 const storeItems=[
  {id:'card-indigo',type:'cardBack',value:'indigo',name:'Indigo Card Back',cost:3,icon:'🂠'},
  {id:'card-royal',type:'cardBack',value:'royal',name:'Royal Card Back',cost:6,icon:'🂠'},
  {id:'felt-violet',type:'felt',value:'violet',name:'Violet Felt',cost:4,icon:'♠'},
  {id:'felt-onyx',type:'felt',value:'onyx',name:'Onyx Felt',cost:6,icon:'♠'},
  {id:'badge-vip',type:'badge',value:'VIP',name:'VIP Profile Badge',cost:5,icon:'✧'},
- {id:'badge-legend',type:'badge',value:'Legend',name:'Legend Badge',cost:9,icon:'👑'}
+ {id:'badge-legend',type:'badge',value:'Legend',name:'Legend Badge',cost:9,icon:'👑'},
+ {id:'card-neon',type:'cardBack',value:'neon',name:'Neon Circuit Cards',cost:8,icon:'🃏'},
+ {id:'felt-midnight',type:'felt',value:'midnight',name:'Midnight Velvet Felt',cost:8,icon:'♠'},
+ {id:'badge-shark',type:'badge',value:'Card Shark',name:'Card Shark Title',cost:8,icon:'🦈'},
+ {id:'badge-royalty',type:'badge',value:'Vault Royalty',name:'Vault Royalty Title',cost:12,icon:'♛'}
 ];
 const baseCosmetics=()=>({name:'Vault Player',avatar:'◆',cardBack:'classic',felt:'emerald',badge:'Player',owned:[]});
 function getCosmetics(){const m=getMeta();if(!m.cosmetics){m.cosmetics=baseCosmetics();saveMeta();}return m.cosmetics;}
 export function applyCosmetics(){
  const c=getCosmetics();
- document.body.dataset.felt=['emerald','violet','onyx'].includes(c.felt)?c.felt:'emerald';
- document.body.dataset.cardBack=['classic','indigo','royal'].includes(c.cardBack)?c.cardBack:'classic';
+ document.body.dataset.felt=['emerald','violet','onyx','midnight'].includes(c.felt)?c.felt:'emerald';
+ document.body.dataset.cardBack=['classic','indigo','royal','neon'].includes(c.cardBack)?c.cardBack:'classic';
  const tag=document.querySelector('#vaultPlayerTag');
  if(tag)tag.textContent=`${c.avatar} ${c.name}`;
 }
@@ -51,6 +55,8 @@ function enhanceProfile(navigate){
  const c=getCosmetics(),host=$('content');if(!host)return;
  host.insertAdjacentHTML('afterbegin',`<section class="v5-identity pro-panel"><div class="v5-avatar">${escapeHtml(c.avatar)}</div><div><div class="pro-kicker">YOUR VAULT IDENTITY · ${escapeHtml(c.badge)}</div><h2 style="margin:6px 0">${escapeHtml(c.name)}</h2><p class="hint">Customize your avatar and rewards without using virtual bankroll credits.</p></div><button class="secondary" id="editIdentity">CUSTOMIZE →</button></section>`);
  document.getElementById('editIdentity').onclick=()=>navigate('wardrobe');
+ host.querySelector('.v5-identity')?.insertAdjacentHTML('beforeend','<button class="secondary" id="profileRecords">REPLAYS & RECORDS →</button>');
+ document.getElementById('profileRecords').onclick=()=>navigate('records');
  const settings=$('themeSelect')?.closest('.pro-panel');
  if(settings){
   settings.insertAdjacentHTML('beforeend',`<div class="settings-row"><div><strong>Sound volume</strong><div class="hint">Choose the intensity of card, chip, and win sounds.</div></div><label>Volume <input id="soundVolume" type="range" min="0" max="100" step="5" value="${Math.round((Number(getMeta().volume)??.65)*100)}"></label></div><div class="settings-row"><div><strong>Learn & explore</strong><div class="hint">Rules, Blackjack strategy, charts, and weekly goals.</div></div><div class="controls"><button class="secondary" id="openGuide">GUIDE</button><button class="secondary" id="openTrainer">TRAINER</button><button class="secondary" id="openAnalytics">ANALYTICS</button></div></div>`);
@@ -78,6 +84,9 @@ function renderGuide(navigate){
  ['✦','Neon Reels','Five columns and three rows create seven left-to-right paylines. Wilds replace ordinary symbols. Three scatters trigger free spins.','slots'],
  ['⚄','Dice','Choose high (8–12) or low (2–6). A seven loses. A correct guess returns twice your virtual wager.','dice'],
  ['?','Trivia Rescue','Answer up to ten questions correctly and cash out whenever your streak has value. A wrong answer loses only the uncashed trivia pot.','trivia'],
+ ['◈','Baccarat','Bet Banker, Player or Tie. Automatic drawing rules and payouts.','baccarat'],
+ ['♦','Video Poker','Deal five cards, hold any you want, and draw for Jacks or Better payouts.','poker'],
+ ['↶','Replays & Records','Review your prior results, Blackjack decisions, and sessions.','records'],
  ['✧','Progression','Earn XP and style tokens, finish optional daily and weekly goals, and unlock local cosmetics. They never change game odds.','weekly']
  ].map(([icon,title,description,id])=>`<article class="pro-panel"><span class="v5-icon">${icon}</span><h3>${title}</h3><p class="hint">${description}</p><button class="secondary" data-guide="${id}">OPEN →</button></article>`).join('')}</div><div class="pro-panel v5-disclaimer"><h3>Know your limits</h3><p>Everything here is virtual. There is no monetary value or exchange for prizes. Outcome percentages are mathematical properties, not promises about any individual round.</p></div></section>`;
  document.querySelectorAll('[data-guide]').forEach(b=>b.onclick=()=>navigate(b.dataset.guide));

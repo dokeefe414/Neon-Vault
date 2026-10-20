@@ -1,7 +1,8 @@
 import {$,money} from '../core/utils.js';
 import {shuffle} from '../core/random.js';
 import {getState,debit,settle} from '../core/store.js';
-import {parseMainBet,parseSideBet,renderWallet,toast,wireBetButtons} from '../ui/common.js';
+import {parseMainBet,parseSideBet,renderWallet,toast,wireBetButtons,playTone} from '../ui/common.js';
+const playDealSound=()=>playTone('deal');
 import {signal} from '../progression/progression.js';
 
 const ACTIVE_KEY='neon-vault-blackjack-round-v1';
@@ -20,8 +21,8 @@ export function handTotal(cards){
 
 function cardsHtml(cards){return cards.map(c=>`<span class="playing-card ${'♥♦'.includes(c.s)?'red':''}">${c.r}${c.s}</span>`).join('');}
 function straight(values){const unique=[...new Set(values)].sort((a,b)=>a-b);return unique.length===3&&(unique[2]-unique[0]===2||JSON.stringify(unique)===JSON.stringify([2,3,14]));}
-function perfectPairs(cards,bet){const[a,b]=cards;if(a.r!==b.r)return{payout:0,label:'Perfect Pairs: no pair'};if(a.s===b.s)return{payout:bet*26,label:'Perfect Pairs: PERFECT PAIR (25:1)'};if(pairColor(a.s)===pairColor(b.s))return{payout:bet*13,label:'Perfect Pairs: COLORED PAIR (12:1)'};return{payout:bet*7,label:'Perfect Pairs: MIXED PAIR (6:1)'};}
-function plusThree(player,dealerUp,bet){
+export function perfectPairs(cards,bet){const[a,b]=cards;if(a.r!==b.r)return{payout:0,label:'Perfect Pairs: no pair'};if(a.s===b.s)return{payout:bet*26,label:'Perfect Pairs: PERFECT PAIR (25:1)'};if(pairColor(a.s)===pairColor(b.s))return{payout:bet*13,label:'Perfect Pairs: COLORED PAIR (12:1)'};return{payout:bet*7,label:'Perfect Pairs: MIXED PAIR (6:1)'};}
+export function plusThree(player,dealerUp,bet){
   const cards=[player[0],player[1],dealerUp],values=cards.map(cardValue),sameSuit=cards.every(c=>c.s===cards[0].s),counts=Object.values(values.reduce((o,v)=>(o[v]=(o[v]||0)+1,o),{})),trips=counts.includes(3),isStraight=straight(values);
   let odds=0,name='no poker hand';
   if(trips&&sameSuit){odds=100;name='SUITED TRIPS';}else if(isStraight&&sameSuit){odds=40;name='STRAIGHT FLUSH';}else if(trips){odds=30;name='THREE OF A KIND';}else if(isStraight){odds=10;name='STRAIGHT';}else if(sameSuit){odds=5;name='FLUSH';}
@@ -50,6 +51,7 @@ export class BlackjackGame{
     $('content').innerHTML=`<div class="game-panel"><span class="pill">VIRTUAL TABLE</span><h2 style="margin-top:16px">Blackjack</h2><p>Blackjack pays 3:2. Dealer stands on 17. Split, Double Down, Insurance, Surrender, Perfect Pairs, and 21+3 are supported.</p><div class="blackjack-rules"><span class="rule-chip">Dealer stands on 17</span><span class="rule-chip">Blackjack 3:2</span><span class="rule-chip">1 split max</span><span class="rule-chip">Split aces: 1 card</span><span class="rule-chip">Insurance 2:1</span><span class="rule-chip">Late surrender</span><span class="rule-chip">Round restore</span></div><div class="controls"><label for="bet">Main wager ($)</label><input id="bet" type="number" min="1" max="10000" step="1" value="25"><button class="secondary" data-bet-adjust="half">½ BET</button><button class="secondary" data-bet-adjust="double">2× BET</button><button class="primary" id="play">DEAL</button></div><div class="controls" style="margin-top:-5px"><label for="pairBet">Perfect Pairs ($)</label><input id="pairBet" type="number" min="0" max="10000" step="1" value="0"><label for="pokerBet">21+3 ($)</label><input id="pokerBet" type="number" min="0" max="10000" step="1" value="0"></div><p class="hint">Perfect Pairs: mixed 6:1 · colored 12:1 · perfect 25:1. 21+3: flush 5:1 · straight 10:1 · trips 30:1 · straight flush 40:1 · suited trips 100:1.</p><div id="table" class="felt"><div class="hint">Your cards will appear here.</div></div><div id="message" class="result"></div><div id="sideMessage" class="hint"></div><div id="actions" class="controls"></div></div>`;
     wireBetButtons();
     $('play').onclick=()=>this.start();
+    $('table').setAttribute('aria-live','polite');
     if(this.round){
       $('message').textContent='Restored active hand';
       this.renderRound(false);
@@ -73,11 +75,14 @@ export class BlackjackGame{
     const pairBet=parseSideBet('pairBet','Perfect Pairs'),pokerBet=parseSideBet('pokerBet','21+3');if(pairBet===null||pokerBet===null)return;
     const totalStake=bet+pairBet+pokerBet;if(totalStake>getState().balance){toast(`You need ${money(totalStake)} for the main wager plus side bets`,'loss');return;}
     debit(totalStake,'Blackjack wagers');
+    playDealSound();
     const shoe=makeShoe(),player=[shoe.pop(),shoe.pop()],dealer=[shoe.pop(),shoe.pop()];
     this.round={shoe,dealer,hands:[{cards:player,bet,stood:false,doubled:false,fromSplit:false}],activeHand:0,settled:false,hasSplit:false,actionTaken:false,insuranceBet:0,insuranceResolved:false};
     this.persistRound();
     $('message').textContent='';
     const notes=[];
+    this.round.replay={initialPlayer:player.map(c=>({...c})),initialDealer:dealer.map(c=>({...c})),actions:[],startedAt:Date.now(),pairBet,pokerBet};
+    this.persistRound();
     if(pairBet){const result=perfectPairs(player,pairBet);settle('Blackjack · Perfect Pairs',pairBet,result.payout,{quiet:true});notes.push(`${result.label}${result.payout?` — ${money(result.payout)} returned`:''}`);}
     if(pokerBet){const result=plusThree(player,dealer[0],pokerBet);settle('Blackjack · 21+3',pokerBet,result.payout,{quiet:true});notes.push(`${result.label}${result.payout?` — ${money(result.payout)} returned`:''}`);}
     $('sideMessage').textContent=notes.join(' · ');this.renderRound(false);
@@ -88,8 +93,8 @@ export class BlackjackGame{
     const total=handTotal(hand.cards);if(total>=21){hand.stood=true;this.persistRound();this.advance();return;}
     const canDouble=hand.cards.length===2&&getState().balance>=hand.bet,canSplit=r.hands.length===1&&hand.cards.length===2&&hand.cards[0].r===hand.cards[1].r&&getState().balance>=hand.bet,canSurrender=hand.cards.length===2&&!hand.fromSplit&&!hand.doubled&&r.hands.length===1&&!r.actionTaken;
     $('actions').innerHTML=`<button class="primary" id="hit" title="Draw one more card (busts above 21)">HIT</button><button class="secondary" id="stand" title="Keep your total and let the dealer play">STAND</button>${canDouble?'<button class="secondary" id="doubleDown" title="Double your wager, receive one card, then stand">DOUBLE DOWN</button>':''}${canSplit?'<button class="secondary" id="splitHand" title="Turn matching cards into two separate hands">SPLIT</button>':''}${canSurrender?'<button class="secondary danger" id="surrender" title="Forfeit half of your initial wager and end this hand">SURRENDER</button>':''}`;
-    $('hit').onclick=()=>{r.actionTaken=true;hand.cards.push(r.shoe.pop());if(handTotal(hand.cards)>=21)hand.stood=true;this.persistRound();this.renderRound(false);if(hand.stood)this.advance();else this.renderActions();};
-    $('stand').onclick=()=>{r.actionTaken=true;hand.stood=true;this.persistRound();this.advance();};
+    $('hit').onclick=()=>{r.actionTaken=true;r.replay?.actions.push({hand:r.activeHand,move:'Hit'});hand.cards.push(r.shoe.pop());playDealSound();if(handTotal(hand.cards)>=21)hand.stood=true;this.persistRound();this.renderRound(false);if(hand.stood)this.advance();else this.renderActions();};
+    $('stand').onclick=()=>{r.actionTaken=true;r.replay?.actions.push({hand:r.activeHand,move:'Stand'});hand.stood=true;this.persistRound();this.advance();};
     if(canDouble)$('doubleDown').onclick=()=>this.doubleDown();if(canSplit)$('splitHand').onclick=()=>this.split();if(canSurrender)$('surrender').onclick=()=>this.surrender();
   }
   offerInsurance(){
@@ -99,6 +104,7 @@ export class BlackjackGame{
   }
   resolveInsurance(take,cost){
     const r=this.round;if(!r)return;
+    r.replay?.actions.push({hand:0,move:take?'Insurance':'Decline insurance'});
     if(take){debit(cost,'Blackjack insurance');r.insuranceBet=cost;this.persistRound();}
     const dealerNatural=handTotal(r.dealer)===21&&r.dealer.length===2;
     if(r.insuranceBet){const payout=dealerNatural?r.insuranceBet*3:0;settle('Blackjack · Insurance',r.insuranceBet,payout,{quiet:true});$('sideMessage').textContent=[$('sideMessage').textContent,`Insurance ${dealerNatural?`wins — ${money(payout)} returned`:'loses'}`].filter(Boolean).join(' · ');}
@@ -106,28 +112,33 @@ export class BlackjackGame{
   }
   doubleDown(){
     const r=this.round,hand=this.currentHand();if(!r||!hand||hand.cards.length!==2||getState().balance<hand.bet)return;
-    r.actionTaken=true;debit(hand.bet,'Blackjack double down');hand.bet*=2;hand.doubled=true;hand.cards.push(r.shoe.pop());hand.stood=true;this.persistRound();this.renderRound(false);this.advance();
+    r.actionTaken=true;r.replay?.actions.push({hand:r.activeHand,move:'Double'});debit(hand.bet,'Blackjack double down');hand.bet*=2;hand.doubled=true;hand.cards.push(r.shoe.pop());playDealSound();hand.stood=true;this.persistRound();this.renderRound(false);this.advance();
   }
   split(){
     const r=this.round,hand=this.currentHand();if(!r||!hand||r.hands.length!==1||hand.cards.length!==2||hand.cards[0].r!==hand.cards[1].r||getState().balance<hand.bet)return;
-    r.actionTaken=true;debit(hand.bet,'Blackjack split');const[first,second]=hand.cards,aces=first.r==='A';r.hasSplit=true;r.hands=[{cards:[first,r.shoe.pop()],bet:hand.bet,stood:aces,doubled:false,fromSplit:true},{cards:[second,r.shoe.pop()],bet:hand.bet,stood:aces,doubled:false,fromSplit:true}];r.activeHand=0;this.persistRound();this.renderRound(false);if(aces){toast('Split aces receive one card each');this.finish();}else this.renderActions();
+    r.actionTaken=true;r.replay?.actions.push({hand:r.activeHand,move:'Split'});debit(hand.bet,'Blackjack split');const[first,second]=hand.cards,aces=first.r==='A';r.hasSplit=true;r.hands=[{cards:[first,r.shoe.pop()],bet:hand.bet,stood:aces,doubled:false,fromSplit:true},{cards:[second,r.shoe.pop()],bet:hand.bet,stood:aces,doubled:false,fromSplit:true}];r.activeHand=0;this.persistRound();this.renderRound(false);if(aces){toast('Split aces receive one card each');this.finish();}else this.renderActions();
   }
   surrender(){
     const r=this.round,hand=this.currentHand();if(!r||!hand||r.actionTaken)return;
-    r.actionTaken=true;const refund=Math.floor(hand.bet/2);this.renderRound(true);$('message').textContent=`Surrender — ${money(refund)} returned`;settle('Blackjack',hand.bet,refund,{quiet:true,metadata:{surrender:true}});toast(`Blackjack: -${money(hand.bet-refund)} net`,'loss');r.settled=true;this.round=null;this.clearRound();$('actions').innerHTML='';renderWallet();
+    r.actionTaken=true;r.replay?.actions.push({hand:r.activeHand,move:'Surrender'});const refund=Math.floor(hand.bet/2);this.renderRound(true);$('message').textContent=`Surrender — ${money(refund)} returned`;settle('Blackjack',hand.bet,refund,{quiet:true,metadata:{surrender:true,replay:this.replaySnapshot(r)}});toast(`Blackjack: -${money(hand.bet-refund)} net`,'loss');r.settled=true;this.round=null;this.clearRound();$('actions').innerHTML='';renderWallet();
   }
   advance(){
     const r=this.round;if(!r)return;let next=r.activeHand+1;while(next<r.hands.length&&(r.hands[next].stood||handTotal(r.hands[next].cards)>=21)){r.hands[next].stood=true;next++;}
     if(next<r.hands.length){r.activeHand=next;this.persistRound();this.renderRound(false);this.renderActions();}else this.finish();
   }
+  replaySnapshot(round){
+    if(!round.replay)return null;
+    const {initialPlayer,initialDealer,actions,startedAt,pairBet,pokerBet}=round.replay;
+    return {version:1,initialPlayer,initialDealer,actions:actions.slice(0,60),startedAt,pairBet,pokerBet,finalDealer:round.dealer,finalHands:round.hands.map(hand=>({cards:hand.cards,bet:hand.bet}))};
+  }
   settleHand(hand,dealerTotal,dealerNatural){
     const playerTotal=handTotal(hand.cards),playerNatural=!hand.fromSplit&&hand.cards.length===2&&playerTotal===21;if(playerTotal>21)return{payout:0,label:'Bust — dealer wins'};if(dealerNatural&&playerNatural)return{payout:hand.bet,label:'Blackjack push'};if(dealerNatural)return{payout:0,label:'Dealer blackjack'};if(playerNatural)return{payout:Math.floor(hand.bet*2.5),label:'Natural blackjack!'};if(dealerTotal>21||playerTotal>dealerTotal)return{payout:hand.bet*2,label:'You win!'};if(playerTotal===dealerTotal)return{payout:hand.bet,label:'Push — wager returned'};return{payout:0,label:'Dealer wins'};
   }
   finish(){
-    const r=this.round;if(!r||r.settled)return;r.settled=true;const allBusted=r.hands.every(h=>handTotal(h.cards)>21);if(!allBusted)while(handTotal(r.dealer)<17)r.dealer.push(r.shoe.pop());const dealerTotal=handTotal(r.dealer),dealerNatural=r.dealer.length===2&&dealerTotal===21,results=r.hands.map(h=>this.settleHand(h,dealerTotal,dealerNatural));this.renderRound(true);$('message').innerHTML=results.map((result,i)=>{const net=result.payout-r.hands[i].bet;return`<span class="v52-result-chip ${net>0?'positive':net<0?'negative':''}">${r.hands.length>1?`Hand ${i+1}: `:''}${result.label} <strong>(${net>=0?'+':''}${money(net)})</strong></span>`;}).join('');results.forEach((result,i)=>{const hand=r.hands[i],record=settle(r.hands.length>1?`Blackjack · Hand ${i+1}`:'Blackjack',hand.bet,result.payout,{quiet:true,metadata:{split:hand.fromSplit,doubleDown:hand.doubled}});if(record.net>0){signal('blackjack-win');if(hand.fromSplit)signal('split-win');if(hand.doubled)signal('double-win');}});const net=results.reduce((sum,result,i)=>sum+result.payout-r.hands[i].bet,0);toast(`Blackjack: ${net>=0?'+':''}${money(net)} net`,net>0?'win':net<0?'loss':'tap');this.round=null;this.clearRound();$('actions').innerHTML='';renderWallet();
+    const r=this.round;if(!r||r.settled)return;r.settled=true;const allBusted=r.hands.every(h=>handTotal(h.cards)>21);if(!allBusted)while(handTotal(r.dealer)<17)r.dealer.push(r.shoe.pop());const dealerTotal=handTotal(r.dealer),dealerNatural=r.dealer.length===2&&dealerTotal===21,results=r.hands.map(h=>this.settleHand(h,dealerTotal,dealerNatural));this.renderRound(true);const panel=$('table');panel?.classList.add('nv-round-finished');$('message').innerHTML=results.map((result,i)=>{const net=result.payout-r.hands[i].bet;return`<span class="v52-result-chip ${net>0?'positive':net<0?'negative':''}">${r.hands.length>1?`Hand ${i+1}: `:''}${result.label} <strong>(${net>=0?'+':''}${money(net)})</strong></span>`;}).join('');results.forEach((result,i)=>{const hand=r.hands[i],record=settle(r.hands.length>1?`Blackjack · Hand ${i+1}`:'Blackjack',hand.bet,result.payout,{quiet:true,metadata:{split:hand.fromSplit,doubleDown:hand.doubled,replay:this.replaySnapshot(r)}});if(record.net>0){signal('blackjack-win');if(hand.fromSplit)signal('split-win');if(hand.doubled)signal('double-win');}});const net=results.reduce((sum,result,i)=>sum+result.payout-r.hands[i].bet,0);toast(`Blackjack: ${net>=0?'+':''}${money(net)} net`,net>0?'win':net<0?'loss':'tap');this.round=null;this.clearRound();$('actions').innerHTML='';renderWallet();
   }
   abandon(){
-    const r=this.round;if(!r||r.settled)return;r.hands.forEach((hand,i)=>settle(r.hands.length>1?`Blackjack · Hand ${i+1}`:'Blackjack',hand.bet,0,{quiet:true,metadata:{forfeit:true}}));r.settled=true;this.round=null;this.clearRound();renderWallet();
+    const r=this.round;if(!r||r.settled)return;r.hands.forEach((hand,i)=>settle(r.hands.length>1?`Blackjack · Hand ${i+1}`:'Blackjack',hand.bet,0,{quiet:true,metadata:{forfeit:true,replay:this.replaySnapshot(r)}}));r.settled=true;this.round=null;this.clearRound();renderWallet();
   }
 }
 

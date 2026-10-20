@@ -257,3 +257,14 @@ Weekly Monday boundaries use local calendar dates. New v5.2 styling enhances gam
 ## v5.3 Trivia expansion
 
 Specialized Trivia Rescue banks are split into independent data-only modules under `src/data/trivia-{geography,science,sports,math,history,technology}.js`, built with strict unique-choice factory helpers and integrated by `src/data/trivia.js`. The general quiz draws from the complete corpus. `src/games/trivia-selection.js` implements persistent category-wide seen lists rather than per-difficulty exhaustion; it gives unseen questions priority across sessions and restarts a category only after all of its prompts have been offered. Existing per-difficulty seen arrays are merged on first use for backwards-compatible progression. Answers are reshuffled per 10-question run while correct indices are recalculated. Tests exercise question counts, uniqueness, choices, historical migration and no-repeat exhaustion.
+
+## v5.4–v5.7 progression, replays, and two new rule engines
+
+- `src/core/baccarat.js`: pure eight-deck Punto Banco drawing, natural-hand checks, automatic player/banker third-card table, banker commission and tie pushes.
+- `src/core/poker.js`: pure 52-card five-card draw rules, wheel straight detection, ordered poker categories, and the Jacks-or-Better paytable.
+- `src/games/baccarat.js` and `src/games/poker.js`: independent DOM controllers wired through the shared wallet and responsive routing. Baccarat shuffles a fresh shoe when cards run low; Poker uses a fresh single deck each round.
+- `src/ui/records.js`: read-only local history views with per-game filters and replay summaries. New Blackjack rounds embed start/final hands and the decision sequence; new Slots results record the symbol matrix. Legacy results remain viewable without replay detail.
+- `src/progression/progression.js`: registers Baccarat/Video Poker as primary games and awards additional cosmetic XP achievements. Avatar and cosmetic options are expanded in `src/ui/v5.js`.
+- `v57.css`: additional casino polish, held-card visualization, Records UI, and cosmetic color themes with reduced-motion support.
+
+LocalStorage is still a browser-controlled store: do not treat local awards as tamper-resistant multiplayer records. The app continues to use the v5 data schema and previous localStorage keys, so these releases preserve bankroll and saved progress. Video Poker does not debit credits during an unfinished Deal step, making accidental page closure before Draw financially harmless to the virtual wallet. Baccarat results and finished Poker draws settle once in the existing `settleWager` path.

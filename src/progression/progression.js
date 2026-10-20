@@ -3,8 +3,8 @@ import {getState,getMeta,saveMeta,updateMeta,grant,subscribe} from '../core/stor
 import {miniToast,playTone} from '../ui/common.js';
 import {trackWeekly} from './weekly.js';
 
-const primaryGame=name=>name==='Blackjack'||/^Blackjack · Hand \d+$/.test(name)||name==='Roulette'||name==='Dice'||/^Slots(?: · Free Spin)?$/.test(name)||/^Trivia \(\d+ streak\)$/.test(name);
-const gameKey=name=>name?.startsWith('Blackjack')?'Blackjack':name?.startsWith('Roulette')?'Roulette':name?.startsWith('Slots')?'Slots':name?.startsWith('Dice')?'Dice':name?.startsWith('Trivia')?'Trivia':null;
+const primaryGame=name=>name==='Blackjack'||/^Blackjack · Hand \d+$/.test(name)||name==='Roulette'||name==='Dice'||/^Slots(?: · Free Spin)?$/.test(name)||/^Trivia \(\d+ streak\)$/.test(name)||name==='Baccarat'||name==='Video Poker';
+const gameKey=name=>name?.startsWith('Blackjack')?'Blackjack':name?.startsWith('Roulette')?'Roulette':name?.startsWith('Slots')?'Slots':name?.startsWith('Dice')?'Dice':name?.startsWith('Trivia')?'Trivia':name?.startsWith('Baccarat')?'Baccarat':name?.startsWith('Video Poker')?'Video Poker':null;
 
 export function levelInfo(){
   const xp=Math.max(0,Number(getMeta().xp)||0);
@@ -18,7 +18,7 @@ export function stats(){
   const history=getState().history||[];
   const primary=history.filter(x=>primaryGame(x.game));
   const gameStats={};
-  ['Blackjack','Roulette','Slots','Dice','Trivia'].forEach(name=>gameStats[name]={plays:0,wins:0,losses:0,pushes:0,net:0,wagered:0});
+  ['Blackjack','Roulette','Slots','Dice','Trivia','Baccarat','Video Poker'].forEach(name=>gameStats[name]={plays:0,wins:0,losses:0,pushes:0,net:0,wagered:0});
   let wins=0,losses=0,pushes=0,biggestWin=0,biggestLoss=0,streak=0,bestWinStreak=0,triviaBest=0;
   primary.forEach(x=>{
     const key=gameKey(x.game); if(!key) return;
@@ -49,7 +49,16 @@ export const achievements=[
   ['double_win','2×','Double Trouble','Win a doubled-down Blackjack hand.',()=>!!getMeta().flags.doubleWin],
   ['comeback','🔋','Back From Zero','Rebuild from $0 using Trivia Rescue.',()=>!!getMeta().flags.triviaComeback],
   ['challenge','🏆','Daily Duty','Complete a daily challenge.',()=>Number(getMeta().completedChallenges)||0>=1],
-  ['level5','◆','Vault Regular','Reach player level 5.',()=>levelInfo().level>=5]
+  ['level5','◆','Vault Regular','Reach player level 5.',()=>levelInfo().level>=5],
+  ['baccarat_first','◈','Baccarat Beginner','Finish your first Baccarat result.',s=>s.gameStats.Baccarat.plays>=1],
+  ['baccarat_win','♣','Banker Breaker','Win a Baccarat bet.',s=>s.gameStats.Baccarat.wins>=1],
+  ['poker_first','♦','Draw Specialist','Complete a Video Poker draw.',s=>s.gameStats['Video Poker'].plays>=1],
+  ['poker_jacks','♠','Jacks or Better','Make a paying high pair in Video Poker.',()=>getState().history.some(x=>x.game==='Video Poker'&&x.result==='jacks')),
+  ['poker_royal','👑','Royal Treatment','Make a royal flush in Video Poker.',()=>getState().history.some(x=>x.game==='Video Poker'&&x.result==='royal')),
+  ['games250','🌟','Vault Veteran','Finish 250 casino results.',s=>s.totalGames>=250],
+  ['games500','💫','Vault Master','Finish 500 casino results.',s=>s.totalGames>=500],
+  ['level10','🏅','Vault Champion','Reach level 10.',()=>levelInfo().level>=10],
+  ['level25','🏆','Legendary Vault','Reach level 25.',()=>levelInfo().level>=25]
 ].map(([id,icon,name,desc,test])=>({id,icon,name,desc,test}));
 
 const challenges=[
