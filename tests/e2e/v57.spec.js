@@ -68,7 +68,9 @@ test('v5.7 expanded cosmetics and achievements render on desktop and mobile',asy
  await expect(page.locator('.v5-avatar-button')).toHaveCount(22);
  await expect(page.locator('[data-item="card-neon"]')).toBeVisible();
  await expect(page.locator('[data-item="felt-midnight"]')).toBeVisible();
+ await page.reload();
  await open(page,'achievements');
+ await expect(page.locator('#pageTitle')).toHaveText('Achievements');
  await expect(page.locator('#content')).toContainText('Baccarat Beginner');
  await expect(page.locator('#content')).toContainText('Royal Treatment');
 });

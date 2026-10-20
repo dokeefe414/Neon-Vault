@@ -52,7 +52,7 @@ test('v5 advanced analytics and weekly goals render',async({page})=>{
  await expect(page.getByRole('heading',{name:'Performance analytics'})).toBeVisible();
  await nav(page,'weekly');
  await expect(page.getByRole('heading',{name:'Weekly challenges',exact:true,level:2})).toBeVisible();
- await expect(page.locator('[data-claim]')).toHaveCount(4);
+ await expect(page.locator('[data-claim]')).toHaveCount(6);
 });
 test('v5 roulette wheel and slots payline visuals load',async({page})=>{
  await boot(page);await nav(page,'roulette');
