@@ -41,3 +41,6 @@ body[data-card-back="neon"] .playing-card.back{background:repeating-linear-gradi
 @media(max-width:700px){.nv-record{gap:7px}.nv-record>span:nth-child(2){display:none}.nv-record-arrow{display:none}.nv-poker-card .playing-card{min-width:49px;height:73px;font-size:18px}.nv-poker-card{min-width:46px;gap:7px}.nv-poker-hand{gap:5px;justify-content:space-between}.nv-poker-table{padding:12px}.nv-hand-score{margin-left:0}.nv-pick{min-width:85px}}
 @media(prefers-reduced-motion:reduce){.nv-round-finished .playing-card,.nv-poker-card{animation:none;transition:none}}
 body.reduce-motion .nv-round-finished .playing-card{animation:none!important}
+
+/* Baccarat betting choices stay near the top of the scrollable game view on phones. */
+@media(max-width:570px){.nv-pick-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0 19px}.nv-pick-row .nv-pick{min-width:0;min-height:58px;padding:8px 3px}.nv-pick-row .nv-pick strong{font-size:11px}.nv-pick-row .nv-pick small{font-size:10px}}

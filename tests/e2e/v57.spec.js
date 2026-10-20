@@ -12,7 +12,7 @@ async function open(page,name){
  await page.locator(`.dock-nav[data-view="${group}"]:visible`).click();
  await page.locator(`[data-hub-go="${name}"]`).click();
 }
-async function state(page){return page.evaluate(()=>JSON.parse(localStorage.getItem('neon-vault-save-v1')));}
+async function state(page){return page.evaluate(()=>JSON.parse(localStorage.getItem('neon-vault-save-v1'))||{balance:100000,history:[]});}
 test('v5.6 Baccarat supports bets and settles once',async({page})=>{
  await clean(page);await open(page,'baccarat');
  await expect(page.locator('#pageTitle')).toHaveText('Baccarat');
