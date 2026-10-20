@@ -61,6 +61,9 @@ test('Poker recognizes all nine winning categories and no win',()=>{
 test('Poker awards correct returns and protects card uniqueness',()=>{
  const royal=['10','J','Q','K','A'].map(r=>c(r));
  assert.equal(pokerPayout(royal,100).payout,100*POKER_PAYTABLE.royal);
+ assert.equal(POKER_PAYTABLE.jacks,2,'A paying pair must earn an actual 1:1 net win');
+ assert.equal(pokerPayout([c('J','♠'),c('J','♥'),c('3','♦'),c('4','♣'),c('8','♠')],500).payout,1000);
+ assert.throws(()=>pokerPayout(royal,0),RangeError);
  assert.throws(()=>evaluatePoker([c('A'),c('A'),c('3'),c('4'),c('5')]),/Duplicate/);
  const deck=[c('2','♥'),c('3','♦')];
  const hand=[c('A','♠'),c('K','♠'),c('Q','♠'),c('J','♠'),c('9','♠')];

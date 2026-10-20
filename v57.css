@@ -44,3 +44,15 @@ body.reduce-motion .nv-round-finished .playing-card{animation:none!important}
 
 /* Baccarat betting choices stay near the top of the scrollable game view on phones. */
 @media(max-width:570px){.nv-pick-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0 19px}.nv-pick-row .nv-pick{min-width:0;min-height:58px;padding:8px 3px}.nv-pick-row .nv-pick strong{font-size:11px}.nv-pick-row .nv-pick small{font-size:10px}}
+
+/* v5.9 prestige: cosmetic-only rank frames and responsive dashboards */
+body[data-frame="bronze"] .v5-avatar{box-shadow:0 0 0 6px #b47c51,0 0 22px #ad7f49aa}
+body[data-frame="silver"] .v5-avatar{box-shadow:0 0 0 6px #b8c6d7,0 0 25px #a7c8f0aa}
+body[data-frame="gold"] .v5-avatar{box-shadow:0 0 0 6px #eac04a,0 0 30px #edc04f88}
+body[data-frame="diamond"] .v5-avatar{box-shadow:0 0 0 6px #91edff,0 0 35px #5cd9ffbb}
+body[data-felt="sapphire"] .felt{--nv-felt-a:#2b5b9e;--nv-felt-b:#091731;--nv-felt-border:#6ba9dc}
+body[data-card-back="aurora"] .playing-card.back{background:repeating-linear-gradient(70deg,#203a85 0,#21a69c 8px,#732e99 15px,#203a85 22px)}
+.v5-weekly-grid .pro-panel{display:grid;gap:13px;align-content:start}
+.v5-weekly-grid .pro-panel>button{justify-self:start;min-height:44px}
+.v5-weekly-grid .progress-track{height:10px}
+@media(max-width:570px){.v5-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.v5-metric-value{font-size:20px}.v5-weekly-grid .pro-panel>button{width:100%}}

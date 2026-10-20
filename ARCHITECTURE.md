@@ -268,3 +268,7 @@ Specialized Trivia Rescue banks are split into independent data-only modules und
 - `v57.css`: additional casino polish, held-card visualization, Records UI, and cosmetic color themes with reduced-motion support.
 
 LocalStorage is still a browser-controlled store: do not treat local awards as tamper-resistant multiplayer records. The app continues to use the v5 data schema and previous localStorage keys, so these releases preserve bankroll and saved progress. Video Poker does not debit credits during an unfinished Deal step, making accidental page closure before Draw financially harmless to the virtual wallet. Baccarat results and finished Poker draws settle once in the existing `settleWager` path.
+
+## v5.8 and v5.9
+
+Video Poker uses a custom house paytable where a Jacks-or-Better high pair returns 2x total; this differs from conventional 9/6 poker. Blackjack rounds now persist unique IDs and a finalized outcome before settling using per-hand idempotency keys. Prestige is cosmetic-only and does not affect odds. Reward claims and progression insights live in `src/progression/rewards.js`, with pages in `src/ui/rewards-views.js`, using optional fields in the existing local v5 meta save. Browser storage remains non-atomic across tabs; a backend would be necessary for tamper-resistant multiplayer balances.

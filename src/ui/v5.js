@@ -16,14 +16,18 @@ const storeItems=[
  {id:'card-neon',type:'cardBack',value:'neon',name:'Neon Circuit Cards',cost:8,icon:'🃏'},
  {id:'felt-midnight',type:'felt',value:'midnight',name:'Midnight Velvet Felt',cost:8,icon:'♠'},
  {id:'badge-shark',type:'badge',value:'Card Shark',name:'Card Shark Title',cost:8,icon:'🦈'},
- {id:'badge-royalty',type:'badge',value:'Vault Royalty',name:'Vault Royalty Title',cost:12,icon:'♛'}
+ {id:'badge-royalty',type:'badge',value:'Vault Royalty',name:'Vault Royalty Title',cost:12,icon:'♛'},
+ {id:'card-aurora',type:'cardBack',value:'aurora',name:'Aurora Card Back',cost:10,icon:'🌌'},
+ {id:'felt-sapphire',type:'felt',value:'sapphire',name:'Sapphire Table',cost:9,icon:'🔷'},
+ {id:'badge-strategist',type:'badge',value:'Strategist',name:'Strategist Title',cost:8,icon:'🧠'}
 ];
 const baseCosmetics=()=>({name:'Vault Player',avatar:'◆',cardBack:'classic',felt:'emerald',badge:'Player',owned:[]});
 function getCosmetics(){const m=getMeta();if(!m.cosmetics){m.cosmetics=baseCosmetics();saveMeta();}return m.cosmetics;}
 export function applyCosmetics(){
  const c=getCosmetics();
- document.body.dataset.felt=['emerald','violet','onyx','midnight'].includes(c.felt)?c.felt:'emerald';
- document.body.dataset.cardBack=['classic','indigo','royal','neon'].includes(c.cardBack)?c.cardBack:'classic';
+ document.body.dataset.felt=['emerald','violet','onyx','midnight','sapphire'].includes(c.felt)?c.felt:'emerald';
+ document.body.dataset.frame=['bronze','silver','gold','diamond'].includes(c.frame)?c.frame:'none';
+ document.body.dataset.cardBack=['classic','indigo','royal','neon','aurora'].includes(c.cardBack)?c.cardBack:'classic';
  const tag=document.querySelector('#vaultPlayerTag');
  if(tag)tag.textContent=`${c.avatar} ${c.name}`;
 }
@@ -87,6 +91,8 @@ function renderGuide(navigate){
  ['◈','Baccarat','Bet Banker, Player or Tie. Automatic drawing rules and payouts.','baccarat'],
  ['♦','Video Poker','Deal five cards, hold any you want, and draw for Jacks or Better payouts.','poker'],
  ['↶','Replays & Records','Review your prior results, Blackjack decisions, and sessions.','records'],
+ ['🏆','Prestige & Rewards','Earn permanent milestone frames and optional daily style gifts.','rewards'],
+ ['▧','Advanced Insights','Observed return rates, per-game performance, and bonus history.','insights'],
  ['✧','Progression','Earn XP and style tokens, finish optional daily and weekly goals, and unlock local cosmetics. They never change game odds.','weekly']
  ].map(([icon,title,description,id])=>`<article class="pro-panel"><span class="v5-icon">${icon}</span><h3>${title}</h3><p class="hint">${description}</p><button class="secondary" data-guide="${id}">OPEN →</button></article>`).join('')}</div><div class="pro-panel v5-disclaimer"><h3>Know your limits</h3><p>Everything here is virtual. There is no monetary value or exchange for prizes. Outcome percentages are mathematical properties, not promises about any individual round.</p></div></section>`;
  document.querySelectorAll('[data-guide]').forEach(b=>b.onclick=()=>navigate(b.dataset.guide));
@@ -118,7 +124,7 @@ function renderWardrobe(){
  const main=$('mainContent');if(main)main.scrollTop=0;
  const c=getCosmetics(),meta=getMeta(),tokens=Number(meta.cosmeticTokens)||0;
  $('content').innerHTML=`<section class="v5-page"><div class="v5-kicker">THE STYLE LOUNGE</div><h2>Customize your profile</h2><p class="hint">Earn cosmetic tokens from achievements and weekly goals. Cosmetic items never change probabilities or game payouts.</p><div class="v5-identity pro-panel"><div class="v5-avatar">${escapeHtml(c.avatar)}</div><div class="v5-name-form"><label class="pro-kicker" for="playerName">DISPLAY NAME (LOCAL ONLY)</label><input id="playerName" maxlength="18" value="${escapeHtml(c.name)}"><button class="primary" id="saveName">SAVE NAME</button><p class="hint">${tokens} style tokens available</p></div></div>
- <h3 style="margin-top:25px">Choose an avatar</h3><div class="v5-avatars">${avatars.map(a=>`<button class="v5-avatar-button ${a===c.avatar?'active':''}" data-avatar="${a}" aria-label="Use avatar ${a}">${a}</button>`).join('')}</div><h3 style="margin:28px 0 14px">Cosmetic collection</h3><div class="v5-shop-grid">${storeItems.map(item=>{const owned=(c.owned||[]).includes(item.id),equipped=c[item.type]===item.value;return `<article class="pro-panel v5-shop"><span class="v5-icon">${item.icon}</span><h3>${item.name}</h3><p class="hint">${owned?'Owned':item.cost+' style tokens'}</p><button class="${equipped?'primary':'secondary'}" data-item="${item.id}">${equipped?'EQUIPPED':owned?'EQUIP':'UNLOCK'}</button></article>`;}).join('')}</div></section>`;
+ <h3 style="margin-top:25px">Choose an avatar</h3><div class="v5-avatars">${avatars.map(a=>`<button class="v5-avatar-button ${a===c.avatar?'active':''}" data-avatar="${a}" aria-label="Use avatar ${a}">${a}</button>`).join('')}</div><h3 style="margin:28px 0 14px">Cosmetic collection</h3><div class="v5-shop-grid">${storeItems.map(item=>{const owned=(c.owned||[]).includes(item.id),equipped=c[item.type]===item.value;return `<article class="pro-panel v5-shop"><span class="v5-icon">${item.icon}</span><h3>${item.name}</h3><p class="hint">${owned?'Owned':item.cost+' style tokens'}</p><button class="${equipped?'primary':'secondary'}" data-item="${item.id}">${equipped?'EQUIPPED':owned?'EQUIP':'UNLOCK'}</button></article>`;}).join('')}</div><div class="pro-panel"><h3>Avatar frames</h3><p class="hint">Earn prestige frames from lifetime XP milestones, then equip them here.</p><div class="v5-avatars">${['none','bronze','silver','gold','diamond'].map(frame=>{const unlocked=frame==='none'||(c.owned||[]).includes('frame-'+frame);return `<button class="secondary" data-frame="${frame}" ${unlocked?'':'disabled'}>${frame.toUpperCase()}${c.frame===frame?' ✓':''}</button>`;}).join('')}</div></div></section>`;
  // Keep avatar selection near the top of the scrollable mobile screen,
  // outside the bottom dock's physical hit area.
  const avatarRow=$('content').querySelector('.v5-avatars');
@@ -126,6 +132,7 @@ function renderWardrobe(){
  if(avatarRow&&identityCard){const label=avatarRow.previousElementSibling;identityCard.before(label,avatarRow);}
  $('saveName').onclick=()=>{const name=$('playerName').value.trim().slice(0,18);if(!name){toast('Please enter a display name','loss');return;}c.name=name;saveMeta();toast('Profile updated','win');renderWardrobe();};
  document.querySelectorAll('[data-avatar]').forEach(b=>b.onclick=()=>{c.avatar=b.dataset.avatar;saveMeta();renderWardrobe();});
+ document.querySelectorAll('[data-frame]').forEach(b=>b.onclick=()=>{c.frame=b.dataset.frame;saveMeta();applyCosmetics();renderWardrobe();});
  document.querySelectorAll('[data-item]').forEach(b=>b.onclick=()=>{const item=storeItems.find(i=>i.id===b.dataset.item);if(!item)return;const owned=c.owned||[];if(!owned.includes(item.id)){if((Number(meta.cosmeticTokens)||0)<item.cost){toast('Not enough style tokens','loss');return;}meta.cosmeticTokens-=item.cost;owned.push(item.id);c.owned=owned;}c[item.type]=item.value;saveMeta();applyCosmetics();renderWardrobe();toast('Cosmetic equipped','win');});
 }
 function renderWeekly(navigate){

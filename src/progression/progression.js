@@ -68,7 +68,9 @@ const challenges=[
   {id:'slots3',event:'slots-win',target:3,title:'Reel Runner',desc:'Win 3 slot spins today.'},
   {id:'trivia5',event:'trivia-correct',target:5,title:'Quick Thinker',desc:'Answer 5 trivia questions correctly today.'},
   {id:'double1',event:'double-win',target:1,title:'Double Down',desc:'Win a doubled-down Blackjack hand.'},
-  {id:'split1',event:'split-win',target:1,title:'Two Hands',desc:'Win a hand after splitting.'}
+  {id:'split1',event:'split-win',target:1,title:'Two Hands',desc:'Win a hand after splitting.'},
+  {id:'baccarat2',event:'baccarat-win',target:2,title:'Punto Banco',desc:'Win two Baccarat bets today.'},
+  {id:'poker2',event:'poker-win',target:2,title:'Poker Night',desc:'Win two Video Poker draws today.'}
 ];
 
 export function dailyChallenge(){

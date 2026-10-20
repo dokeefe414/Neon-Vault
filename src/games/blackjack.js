@@ -6,6 +6,7 @@ const playDealSound=()=>playTone('deal');
 import {signal} from '../progression/progression.js';
 
 const ACTIVE_KEY='neon-vault-blackjack-round-v1';
+const newRoundId=()=>Array.from(crypto.getRandomValues(new Uint32Array(4)),n=>n.toString(16).padStart(8,'0')).join('');
 const suits=['♠','♥','♦','♣'];
 const ranks=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const makeShoe=()=>shuffle(Array.from({length:6},()=>suits.flatMap(s=>ranks.map(r=>({s,r})))).flat());
@@ -39,7 +40,7 @@ function loadRound(){
 }
 
 export class BlackjackGame{
-  constructor(){this.round=loadRound();}
+  constructor(){this.round=loadRound();if(this.round&&!this.round.id){this.round.id=newRoundId();this.persistRound();}}
   persistRound(){
     if(this.round&&!this.round.settled)localStorage.setItem(ACTIVE_KEY,JSON.stringify(this.round));
     else localStorage.removeItem(ACTIVE_KEY);
@@ -53,6 +54,7 @@ export class BlackjackGame{
     $('play').onclick=()=>this.start();
     $('table').setAttribute('aria-live','polite');
     if(this.round){
+      if(this.round.settlementReady){this.finish();return;}
       $('message').textContent='Restored active hand';
       this.renderRound(false);
       if(this.round.dealer[0].r==='A'&&!this.round.insuranceResolved)this.offerInsurance();else this.renderActions();
@@ -77,14 +79,14 @@ export class BlackjackGame{
     debit(totalStake,'Blackjack wagers');
     playDealSound();
     const shoe=makeShoe(),player=[shoe.pop(),shoe.pop()],dealer=[shoe.pop(),shoe.pop()];
-    this.round={shoe,dealer,hands:[{cards:player,bet,stood:false,doubled:false,fromSplit:false}],activeHand:0,settled:false,hasSplit:false,actionTaken:false,insuranceBet:0,insuranceResolved:false};
+    this.round={id:newRoundId(),shoe,dealer,hands:[{cards:player,bet,stood:false,doubled:false,fromSplit:false}],activeHand:0,settled:false,hasSplit:false,actionTaken:false,insuranceBet:0,insuranceResolved:false};
     this.persistRound();
     $('message').textContent='';
     const notes=[];
     this.round.replay={initialPlayer:player.map(c=>({...c})),initialDealer:dealer.map(c=>({...c})),actions:[],startedAt:Date.now(),pairBet,pokerBet};
     this.persistRound();
-    if(pairBet){const result=perfectPairs(player,pairBet);settle('Blackjack · Perfect Pairs',pairBet,result.payout,{quiet:true});notes.push(`${result.label}${result.payout?` — ${money(result.payout)} returned`:''}`);}
-    if(pokerBet){const result=plusThree(player,dealer[0],pokerBet);settle('Blackjack · 21+3',pokerBet,result.payout,{quiet:true});notes.push(`${result.label}${result.payout?` — ${money(result.payout)} returned`:''}`);}
+    if(pairBet){const result=perfectPairs(player,pairBet);settle('Blackjack · Perfect Pairs',pairBet,result.payout,{quiet:true,id:`bj-${this.round.id}-pair`});notes.push(`${result.label}${result.payout?` — ${money(result.payout)} returned`:''}`);}
+    if(pokerBet){const result=plusThree(player,dealer[0],pokerBet);settle('Blackjack · 21+3',pokerBet,result.payout,{quiet:true,id:`bj-${this.round.id}-plus3`});notes.push(`${result.label}${result.payout?` — ${money(result.payout)} returned`:''}`);}
     $('sideMessage').textContent=notes.join(' · ');this.renderRound(false);
     if(dealer[0].r==='A'){this.offerInsurance();return;}if(handTotal(player)===21||handTotal(dealer)===21){this.finish();return;}this.renderActions();
   }
@@ -100,14 +102,18 @@ export class BlackjackGame{
   offerInsurance(){
     const r=this.round;if(!r)return;const cost=Math.floor(r.hands[0].bet/2),afford=getState().balance>=cost;
     $('actions').innerHTML=`<div class="insurance-callout"><strong>Dealer shows an Ace.</strong> Insurance costs ${money(cost)} and pays 2:1 if the dealer has Blackjack.</div><button class="secondary" id="declineInsurance">NO INSURANCE</button>${afford?'<button class="primary" id="takeInsurance">TAKE INSURANCE</button>':''}`;
+    if(r.insuranceDecision){this.resolveInsurance(r.insuranceDecision==='take',cost);return;}
     $('declineInsurance').onclick=()=>this.resolveInsurance(false,cost);if(afford)$('takeInsurance').onclick=()=>this.resolveInsurance(true,cost);
   }
   resolveInsurance(take,cost){
     const r=this.round;if(!r)return;
-    r.replay?.actions.push({hand:0,move:take?'Insurance':'Decline insurance'});
-    if(take){debit(cost,'Blackjack insurance');r.insuranceBet=cost;this.persistRound();}
+    if(!r.insuranceDecision){
+      r.replay?.actions.push({hand:0,move:take?'Insurance':'Decline insurance'});
+      if(take){debit(cost,'Blackjack insurance');r.insuranceBet=cost;}
+      r.insuranceDecision=take?'take':'decline';this.persistRound();
+    }
     const dealerNatural=handTotal(r.dealer)===21&&r.dealer.length===2;
-    if(r.insuranceBet){const payout=dealerNatural?r.insuranceBet*3:0;settle('Blackjack · Insurance',r.insuranceBet,payout,{quiet:true});$('sideMessage').textContent=[$('sideMessage').textContent,`Insurance ${dealerNatural?`wins — ${money(payout)} returned`:'loses'}`].filter(Boolean).join(' · ');}
+    if(r.insuranceBet){const payout=dealerNatural?r.insuranceBet*3:0;settle('Blackjack · Insurance',r.insuranceBet,payout,{quiet:true,id:`bj-${r.id}-insurance`});$('sideMessage').textContent=[$('sideMessage').textContent,`Insurance ${dealerNatural?`wins — ${money(payout)} returned`:'loses'}`].filter(Boolean).join(' · ');}
     r.insuranceResolved=true;this.persistRound();if(dealerNatural||handTotal(r.hands[0].cards)===21)this.finish();else this.renderActions();
   }
   doubleDown(){
@@ -120,7 +126,7 @@ export class BlackjackGame{
   }
   surrender(){
     const r=this.round,hand=this.currentHand();if(!r||!hand||r.actionTaken)return;
-    r.actionTaken=true;r.replay?.actions.push({hand:r.activeHand,move:'Surrender'});const refund=Math.floor(hand.bet/2);this.renderRound(true);$('message').textContent=`Surrender — ${money(refund)} returned`;settle('Blackjack',hand.bet,refund,{quiet:true,metadata:{surrender:true,replay:this.replaySnapshot(r)}});toast(`Blackjack: -${money(hand.bet-refund)} net`,'loss');r.settled=true;this.round=null;this.clearRound();$('actions').innerHTML='';renderWallet();
+    r.actionTaken=true;r.replay?.actions.push({hand:r.activeHand,move:'Surrender'});const refund=Math.floor(hand.bet/2);this.renderRound(true);$('message').textContent=`Surrender — ${money(refund)} returned`;settle('Blackjack',hand.bet,refund,{quiet:true,id:`bj-${r.id}-hand-0`,metadata:{surrender:true,replay:this.replaySnapshot(r)}});toast(`Blackjack: -${money(hand.bet-refund)} net`,'loss');r.settled=true;this.round=null;this.clearRound();$('actions').innerHTML='';renderWallet();
   }
   advance(){
     const r=this.round;if(!r)return;let next=r.activeHand+1;while(next<r.hands.length&&(r.hands[next].stood||handTotal(r.hands[next].cards)>=21)){r.hands[next].stood=true;next++;}
@@ -135,10 +141,40 @@ export class BlackjackGame{
     const playerTotal=handTotal(hand.cards),playerNatural=!hand.fromSplit&&hand.cards.length===2&&playerTotal===21;if(playerTotal>21)return{payout:0,label:'Bust — dealer wins'};if(dealerNatural&&playerNatural)return{payout:hand.bet,label:'Blackjack push'};if(dealerNatural)return{payout:0,label:'Dealer blackjack'};if(playerNatural)return{payout:Math.floor(hand.bet*2.5),label:'Natural blackjack!'};if(dealerTotal>21||playerTotal>dealerTotal)return{payout:hand.bet*2,label:'You win!'};if(playerTotal===dealerTotal)return{payout:hand.bet,label:'Push — wager returned'};return{payout:0,label:'Dealer wins'};
   }
   finish(){
-    const r=this.round;if(!r||r.settled)return;r.settled=true;const allBusted=r.hands.every(h=>handTotal(h.cards)>21);if(!allBusted)while(handTotal(r.dealer)<17)r.dealer.push(r.shoe.pop());const dealerTotal=handTotal(r.dealer),dealerNatural=r.dealer.length===2&&dealerTotal===21,results=r.hands.map(h=>this.settleHand(h,dealerTotal,dealerNatural));this.renderRound(true);const panel=$('table');panel?.classList.add('nv-round-finished');$('message').innerHTML=results.map((result,i)=>{const net=result.payout-r.hands[i].bet;return`<span class="v52-result-chip ${net>0?'positive':net<0?'negative':''}">${r.hands.length>1?`Hand ${i+1}: `:''}${result.label} <strong>(${net>=0?'+':''}${money(net)})</strong></span>`;}).join('');results.forEach((result,i)=>{const hand=r.hands[i],record=settle(r.hands.length>1?`Blackjack · Hand ${i+1}`:'Blackjack',hand.bet,result.payout,{quiet:true,metadata:{split:hand.fromSplit,doubleDown:hand.doubled,replay:this.replaySnapshot(r)}});if(record.net>0){signal('blackjack-win');if(hand.fromSplit)signal('split-win');if(hand.doubled)signal('double-win');}});const net=results.reduce((sum,result,i)=>sum+result.payout-r.hands[i].bet,0);toast(`Blackjack: ${net>=0?'+':''}${money(net)} net`,net>0?'win':net<0?'loss':'tap');this.round=null;this.clearRound();$('actions').innerHTML='';renderWallet();
+    const r=this.round;if(!r||r.settled)return;
+    if(!r.settlementReady){
+      const allBusted=r.hands.every(h=>handTotal(h.cards)>21);
+      if(!allBusted)while(handTotal(r.dealer)<17)r.dealer.push(r.shoe.pop());
+      // Save the final cards BEFORE settlement. A reload resumes the same outcome.
+      r.settlementReady=true;this.persistRound();
+    }
+    const dealerTotal=handTotal(r.dealer),dealerNatural=r.dealer.length===2&&dealerTotal===21;
+    const results=r.hands.map(h=>this.settleHand(h,dealerTotal,dealerNatural));
+    this.renderRound(true);
+    $('table')?.classList.add('nv-round-finished');
+    $('message').innerHTML=results.map((result,i)=>{
+      const net=result.payout-r.hands[i].bet;
+      return`<span class="v52-result-chip ${net>0?'positive':net<0?'negative':''}">${r.hands.length>1?`Hand ${i+1}: `:''}${result.label} <strong>(${net>=0?'+':''}${money(net)})</strong></span>`;
+    }).join('');
+    results.forEach((result,i)=>{
+      const hand=r.hands[i],id=`bj-${r.id}-hand-${i}`;
+      const existed=getState().history.some(record=>record.settlementId===id);
+      const record=settle(r.hands.length>1?`Blackjack · Hand ${i+1}`:'Blackjack',hand.bet,result.payout,{quiet:true,id,metadata:{split:hand.fromSplit,doubleDown:hand.doubled,replay:this.replaySnapshot(r)}});
+      if(!existed&&record.net>0){
+        signal('blackjack-win');
+        if(hand.fromSplit)signal('split-win');
+        if(hand.doubled)signal('double-win');
+      }
+    });
+    const net=results.reduce((sum,result,i)=>sum+result.payout-r.hands[i].bet,0);
+    toast(`Blackjack: ${net>=0?'+':''}${money(net)} net`,net>0?'win':net<0?'loss':'tap');
+    r.settled=true;this.round=null;this.clearRound();$('actions').innerHTML='';renderWallet();
   }
   abandon(){
-    const r=this.round;if(!r||r.settled)return;r.hands.forEach((hand,i)=>settle(r.hands.length>1?`Blackjack · Hand ${i+1}`:'Blackjack',hand.bet,0,{quiet:true,metadata:{forfeit:true,replay:this.replaySnapshot(r)}}));r.settled=true;this.round=null;this.clearRound();renderWallet();
+    const r=this.round;if(!r||r.settled)return;
+    if(r.settlementReady){this.finish();return;}
+    r.hands.forEach((hand,i)=>settle(r.hands.length>1?`Blackjack · Hand ${i+1}`:'Blackjack',hand.bet,0,{quiet:true,id:`bj-${r.id}-hand-${i}`,metadata:{forfeit:true,replay:this.replaySnapshot(r)}}));
+    r.settled=true;this.round=null;this.clearRound();renderWallet();
   }
 }
 

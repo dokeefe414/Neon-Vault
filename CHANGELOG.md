@@ -1,5 +1,17 @@
 # NEON VAULT Changelog
 
+## 5.9.0 — Prestige & Insights
+- Optional daily cosmetic-token claim and claim-once lifetime XP milestones.
+- Bronze, Silver, Gold and Diamond frames, more card backs and felt designs.
+- Advanced observed-return statistics, game-specific breakdowns, and more Baccarat/Poker challenges.
+
+## 5.8.0 — Game Rule & Reliability
+- Jacks-or-Better returns 2x total wager in the NEON VAULT custom paytable.
+- Blackjack round IDs and idempotent, persisted final outcomes for retry safety.
+- Blackjack side-bet totals included in game-specific performance without counting extra hands.
+
+
+
 ## 5.7.0 — Collector's Vault
 - Added more player avatars, collectible felt and card-back designs, and cosmetic titles.
 - Expanded the achievement catalog for long-term play and the new game types.

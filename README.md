@@ -1,10 +1,15 @@
-# NEON VAULT v5.7 — The Premier Experience
+# NEON VAULT v5.9 — The Premier Experience
 
 **[Play NEON VAULT](https://dokeefe414.github.io/Neon-Vault/)** · Created by Daniel O'Keefe
 
 NEON VAULT is a responsive, installable, offline-capable browser casino **simulation using fictional credits only**. No real-money wagering, deposits, purchases, cash prizes, or credits of monetary value.
 
-## What's new through v5.7
+## What's new through v5.9
+
+- v5.8 fixes Jacks-or-Better payout and Blackjack settlement recovery.
+- v5.9 adds permanent cosmetic Prestige rewards, once-daily optional style tokens, new challenges and advanced analytics.
+
+## Earlier releases
 
 - **v5.4:** Blackjack dealing/settlement polish and direct side-bet payout audits.
 - **v5.5:** Game records and optional Blackjack decision replays with stored hands; filters and saved session details.

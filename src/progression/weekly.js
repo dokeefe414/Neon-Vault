@@ -4,7 +4,9 @@ const defs=[
  {id:'play20',title:'Casino Explorer',desc:'Settle 20 games this week',event:'round',target:20},
  {id:'blackjack5',title:'Table Veteran',desc:'Win 5 Blackjack hands this week',event:'blackjack-win',target:5},
  {id:'trivia20',title:'Knowledge Master',desc:'Answer 20 trivia questions correctly this week',event:'trivia-correct',target:20},
- {id:'roulette5',title:'Wheel Watcher',desc:'Win 5 Roulette bets this week',event:'roulette-win',target:5}
+ {id:'roulette5',title:'Wheel Watcher',desc:'Win 5 Roulette bets this week',event:'roulette-win',target:5},
+ {id:'baccarat5',title:'Baccarat Ace',desc:'Win five Baccarat bets this week',event:'baccarat-win',target:5},
+ {id:'poker5',title:'Draw Master',desc:'Win five Video Poker draws this week',event:'poker-win',target:5}
 ];
 export const weeklyObjectives=defs;
 export function weekKey(date=new Date()){
