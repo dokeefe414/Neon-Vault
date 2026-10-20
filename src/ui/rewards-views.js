@@ -1,5 +1,5 @@
 import {$,money,escapeHtml} from '../core/utils.js';
-import {getMeta,getState,saveMeta} from '../core/store.js';
+import {getMeta} from '../core/store.js';
 import {prestigeStatus,prestigeMilestones,claimPrestige,claimDailyStyleReward,rewardState,gameplayInsights} from '../progression/rewards.js';
 import {toast} from './common.js';
 export function renderPrestige(navigate){
