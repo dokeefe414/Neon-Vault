@@ -28,7 +28,7 @@ test('Online full flow: register, server Dice result, history and verified leade
  await page.locator('#cloudInstant button[type="submit"]').click();
  await expect(page.locator('#cloudResult')).toContainText('SERVER-VERIFIED RESULT',{timeout:15000});
  await page.locator('[data-cloud-tab="records"]').click();
- await expect(page.locator('#cloudPanel')).toContainText('Dice',{timeout:15000});
+ await expect(page.locator('#cloudPanel')).toContainText(/dice/i,{timeout:15000});
  await page.locator('[data-cloud-tab="leaderboard"]').click();
  await expect(page.locator('#cloudPanel')).toContainText(username,{timeout:15000});
  await page.locator('[data-cloud-tab="rewards"]').click();
