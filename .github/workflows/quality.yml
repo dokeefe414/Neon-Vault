@@ -43,7 +43,24 @@ jobs:
         run: npm audit --audit-level=high
       - name: Install Chromium for Playwright
         run: npx playwright install --with-deps chromium
-      - name: Run Playwright browser tests
+      - name: Start locally isolated Cloud API for browser integration tests
+        run: |
+          nohup uvicorn app.main:app --app-dir server --host 127.0.0.1 --port 8000 > /tmp/neon-vault-cloud-ci.log 2>&1 &
+          python - <<'PY'
+          import time,urllib.request
+          for _ in range(80):
+              try:
+                  if urllib.request.urlopen('http://127.0.0.1:8000/healthz',timeout=1).status==200:
+                      print('Cloud API ready')
+                      break
+              except Exception:
+                  time.sleep(.25)
+          else:
+              raise RuntimeError('Cloud API did not become ready')
+          PY
+      - name: Run Playwright browser tests against the real local API
+        env:
+          TEST_CLOUD_API_URL: http://127.0.0.1:8000
         run: npm run test:e2e
       - name: Upload Playwright report
         if: always()

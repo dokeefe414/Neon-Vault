@@ -82,3 +82,7 @@ For Docker/PostgreSQL and an internet-facing API, read **[V6-DEPLOYMENT.md](V6-D
 Credentials never go into local guest saves, the offline cache, or a GitHub repository. Cloud tokens are kept in **sessionStorage** (one browser tab session), never in persistent localStorage. The API origin you choose is stored locally; **only enter a trusted HTTPS API origin**, except localhost for development. Password reset/email verification are not yet configured; see deployment guide for production requirements. The backend rejects unknown input fields and any attempt to set credits, XP, or leaderboard ranks via profile updates.
 
 The project is not suitable for real-money use and is not intended to support it. Browser-only testing and CI do not make an internet-facing service production-ready without HTTPS, controlled backups, secret management, abuse protections, legal/privacy review, and operational monitoring.
+
+### Full-stack browser integration tests
+
+CI now starts an isolated local FastAPI service, runs the existing desktop/mobile Playwright suite, and runs a real end-to-end cloud test: signup, login session, virtual Dice wager, verified history, leaderboard, daily cosmetic claim, Video Poker round recovery, and server-verified Trivia. To run those tests locally, generate the Trivia bank and start the API, then run `TEST_CLOUD_API_URL=http://127.0.0.1:8000 npm run test:e2e` (use the appropriate environment-variable syntax for your shell). Without that variable, the cloud integration cases are skipped; guest/browser tests still run.

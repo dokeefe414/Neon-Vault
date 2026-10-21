@@ -73,3 +73,7 @@ The application does **not** currently provide verified email, account recovery,
 ## What comes after initial hosting
 
 The next production milestone is database migrations, managed authentication recovery, distributed abuse throttling, operational security review, and improved server-authoritative challenge tracking. Do not enable public tournaments or real-world prizes without fully validated infrastructure and appropriate review.
+
+## Test the entire browser-to-API integration locally
+
+After starting the API and generating the question bank, run `TEST_CLOUD_API_URL=http://127.0.0.1:8000 npm run test:e2e`. In PowerShell, use `$env:TEST_CLOUD_API_URL='http://127.0.0.1:8000'; npm run test:e2e`. The GitHub Actions quality workflow starts its own API and executes those integration checks automatically, then tears the isolated test infrastructure down. These tests are not a substitute for real production-load, cross-worker concurrency, or security penetration testing.

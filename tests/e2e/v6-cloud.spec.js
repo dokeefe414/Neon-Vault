@@ -1,0 +1,63 @@
+import {test,expect} from '@playwright/test';
+const API=process.env.TEST_CLOUD_API_URL;
+test.skip(!API,'A locally running cloud API is required for end-to-end account tests.');
+
+async function online(page){
+ await page.goto('/');
+ await page.evaluate(()=>{localStorage.clear();sessionStorage.clear();});
+ await page.reload();
+ const cloud=page.locator('.nav[data-view="cloud"]:visible');
+ if(await cloud.count())await cloud.click();
+ else await page.locator('.dock-nav[data-view="cloud"]:visible').click();
+ await page.locator('#cloudOrigin').fill(API);
+ await page.locator('#cloudConfigForm button[type="submit"]').click();
+ await expect(page.locator('#cloudRegister')).toBeVisible();
+ const username='ci'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36);
+ await page.locator('#cloudRegister input[name="username"]').fill(username);
+ await page.locator('#cloudRegister input[name="password"]').fill('a-cloud-testing-passphrase-2026');
+ await page.locator('#cloudRegister button[type="submit"]').click();
+ await expect(page.locator('.cloud-stats')).toBeVisible({timeout:15000});
+ await expect(page.locator('#cloudBody')).toContainText(username);
+ return username;
+}
+test('Online full flow: register, server Dice result, history and verified leaderboard',async({page})=>{
+ const username=await online(page);
+ await expect(page.locator('.cloud-total').first()).toContainText('$1,000.00');
+ await page.locator('[data-cloud-game="dice"]').click();
+ await page.locator('#cloudBet').fill('5');
+ await page.locator('#cloudInstant button[type="submit"]').click();
+ await expect(page.locator('#cloudResult')).toContainText('SERVER-VERIFIED RESULT',{timeout:15000});
+ await page.locator('[data-cloud-tab="records"]').click();
+ await expect(page.locator('#cloudPanel')).toContainText('Dice',{timeout:15000});
+ await page.locator('[data-cloud-tab="leaderboard"]').click();
+ await expect(page.locator('#cloudPanel')).toContainText(username,{timeout:15000});
+ await page.locator('[data-cloud-tab="rewards"]').click();
+ await page.locator('#cloudDailyReward').click();
+ await expect(page.locator('#cloudDailyReward')).toBeDisabled({timeout:15000});
+ await page.locator('#cloudSignout').click();
+ await expect(page.locator('#cloudLogin')).toBeVisible({timeout:15000});
+});
+test('Online stateful rounds: Poker deal survives browser reload and Trivia answers stay private',async({page})=>{
+ await online(page);
+ await page.locator('[data-cloud-game="poker"]').click();
+ await page.locator('#cloudPokerBet').fill('7');
+ await page.locator('#cloudPokerDeal').click();
+ await expect(page.locator('[data-cloud-hold]')).toHaveCount(5,{timeout:15000});
+ await page.reload();
+ const cloud=page.locator('.nav[data-view="cloud"]:visible');
+ if(await cloud.count())await cloud.click();
+ else await page.locator('.dock-nav[data-view="cloud"]:visible').click();
+ await expect(page.locator('.cloud-stats')).toBeVisible({timeout:15000});
+ await page.locator('[data-cloud-game="poker"]').click();
+ await expect(page.locator('[data-cloud-hold]')).toHaveCount(5);
+ await page.locator('[data-cloud-hold="0"]').click();
+ await expect(page.locator('[data-cloud-hold="0"]')).toHaveAttribute('aria-pressed','true');
+ await page.locator('#cloudDraw').click();
+ await expect(page.locator('#cloudResult')).toContainText('Video Poker',{timeout:15000});
+ await page.locator('[data-cloud-game="trivia"]').click();
+ await page.locator('#cloudTriviaStart').click();
+ await expect(page.locator('[data-cloud-answer]')).toHaveCount(4,{timeout:15000});
+ await expect(page.locator('#cloudTriviaQ')).toContainText('QUESTION');
+ await page.locator('[data-cloud-answer="0"]').click();
+ await expect(page.locator('#content')).toContainText(/correct|pot|wrong|question/i,{timeout:15000});
+});
