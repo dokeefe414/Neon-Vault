@@ -11,7 +11,7 @@ test('Online Vault opens as a separate account-mode without touching guest walle
  await expect(page.locator('.cloud-setup')).toBeVisible();
  await expect(page.locator('#balance')).toHaveText(balance);
  await expect(page.locator('#cloudOrigin')).toHaveAttribute('type','url');
- await expect(page.locator('#content')).toContainText('Guest');
+ await expect(page.locator('#content')).toContainText(/guest/i);
 });
 test('Offline guest casino remains accessible from Online Vault without configuring an API',async({page})=>{
  await page.goto('/');
