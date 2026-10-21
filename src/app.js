@@ -13,10 +13,11 @@ import {baccaratGame} from './games/baccarat.js';
 import {pokerGame} from './games/poker.js';
 import {renderRecords} from './ui/records.js';
 import {renderPrestige,renderDetailedInsights} from './ui/rewards-views.js';
+import {renderCloud} from './ui/cloud.js';
 import {renderV5View,enhanceV5View,applyCosmetics} from './ui/v5.js';
 
 const games={blackjack:blackjackGame,roulette:rouletteGame,slots:slotsGame,dice:diceGame,trivia:triviaGame,baccarat:baccaratGame,poker:pokerGame};
-const titles={home:'The Vault',games:'Games',progress:'Progress',blackjack:'Blackjack',roulette:'Roulette',slots:'Slots',dice:'Dice',trivia:'Trivia Rescue',profile:'Player Profile',achievements:'Achievements',challenges:'Daily Challenge',history:'Activity',guide:'How to Play',trainer:'Blackjack Academy',analytics:'Analytics',wardrobe:'Style Lounge',weekly:'Weekly Challenges',rewards:'Prestige & Rewards',insights:'Advanced Insights',records:'Game Records',baccarat:'Baccarat',poker:'Video Poker'};
+const titles={cloud:'Online Vault',home:'The Vault',games:'Games',progress:'Progress',blackjack:'Blackjack',roulette:'Roulette',slots:'Slots',dice:'Dice',trivia:'Trivia Rescue',profile:'Player Profile',achievements:'Achievements',challenges:'Daily Challenge',history:'Activity',guide:'How to Play',trainer:'Blackjack Academy',analytics:'Analytics',wardrobe:'Style Lounge',weekly:'Weekly Challenges',rewards:'Prestige & Rewards',insights:'Advanced Insights',records:'Game Records',baccarat:'Baccarat',poker:'Video Poker'};
 let view='home';
 
 function setActiveNav(next){
@@ -89,6 +90,7 @@ function renderCurrent(){
     if(view==='progress')return renderProgressHub();
     if(view==='history')return renderActivity();
     if(view==='records')return renderRecords();
+    if(view==='cloud')return renderCloud();
     if(view==='rewards')return renderPrestige(navigate);
     if(view==='insights')return renderDetailedInsights();
     if(view==='profile'){renderProfile();appendSessionCard();enhanceV5View(view,navigate);return;}

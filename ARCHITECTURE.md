@@ -272,3 +272,23 @@ LocalStorage is still a browser-controlled store: do not treat local awards as t
 ## v5.8 and v5.9
 
 Video Poker uses a custom house paytable where a Jacks-or-Better high pair returns 2x total; this differs from conventional 9/6 poker. Blackjack rounds now persist unique IDs and a finalized outcome before settling using per-hand idempotency keys. Prestige is cosmetic-only and does not affect odds. Reward claims and progression insights live in `src/progression/rewards.js`, with pages in `src/ui/rewards-views.js`, using optional fields in the existing local v5 meta save. Browser storage remains non-atomic across tabs; a backend would be necessary for tamper-resistant multiplayer balances.
+
+## v6.0 — Server-authoritative online architecture
+
+The GitHub Pages app now has two independent gameplay modes. **Guest** uses the existing browser-local `src/core/store.js` and all local game controllers; **Online Vault** uses `src/ui/cloud.js` and a separately deployed Python FastAPI service. The online client intentionally never calls guest debit, settle or local-wallet mutation functions. The local guest balance is not imported as trusted online credit.
+
+```text
+GitHub Pages (src/app.js)
+ ├─ Guest pages → ES-module game controllers → localStorage and offline Service Worker
+ └─ Online Vault (src/ui/cloud.js) → HTTPS JSON API (server/app/main.py)
+                                       ├─ Argon2id credentials + hashed bearer sessions
+                                       ├─ SQLAlchemy UoW / PostgreSQL user-row locks
+                                       ├─ Immutable round and ledger journal
+                                       ├─ Idempotency key + fingerprint + stored response
+                                       ├─ Server-owned games and secret decks
+                                       └─ XP leaderboard, profiles and cosmetic rewards
+```
+
+Game decisions are validated server-side, including payout calculations, third-card drawing and private Trivia answer choices. A request with the same idempotency key returns its original result, while changed input with that key is rejected. Client guesses, externally edited local save files, or fabricated wins cannot set cloud balances or leaderboard XP. All amounts are integer cents. Session tokens expire, are revocable, and are stored hashed in PostgreSQL. CORS accepts explicit trusted origins only. The offline Service Worker only caches known same-origin assets and navigation—not authenticated API responses or other network resources.
+
+SQLite is exclusively for local development/test runs; PostgreSQL row locks are required for deployment. v6 initial schema uses `create_all` and requires versioned migrations before subsequent production schema changes. Password recovery, distributed rate limiting, email verification and a deployed public HTTPS API are not included until configured and reviewed. The frontend never claims a cloud is online until explicitly connected to an independently deployed backend.

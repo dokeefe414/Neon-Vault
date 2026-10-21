@@ -1,5 +1,14 @@
 # NEON VAULT Changelog
 
+## 6.0.0 — The Online Era
+- Added optional Online Vault for seven server-verified games with a separate cloud wallet.
+- FastAPI, SQLAlchemy, Argon2id password hashes, revocable bearer tokens, trusted-origin CORS and PostgreSQL Docker infrastructure.
+- Atomic idempotency records, server-owned deck/question secrecy, saved cloud histories, and verified XP rankings.
+- Build-time generation of the complete expanded Trivia question bank for private server answer checking.
+- Authenticated cosmetic rewards, optional daily tokens and online profiles.
+- Generated Python tests and API integration into CI.
+- The cloud backend still requires separately configured HTTPS hosting; local guest play remains completely independent.
+
 ## 5.9.0 — Prestige & Insights
 - Optional daily cosmetic-token claim and claim-once lifetime XP milestones.
 - Bronze, Silver, Gold and Diamond frames, more card backs and felt designs.

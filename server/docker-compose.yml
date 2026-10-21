@@ -1,0 +1,26 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vault
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your environment}
+      POSTGRES_DB: neon_vault
+    volumes: [neon_db:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U vault -d neon_vault"]
+      interval: 5s
+      retries: 12
+  api:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://vault:${POSTGRES_PASSWORD}@db:5432/neon_vault
+      ENVIRONMENT: production
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://dokeefe414.github.io}
+    depends_on:
+      db: {condition: service_healthy}
+    ports: ["127.0.0.1:8000:8000"]
+volumes: {neon_db: {}}

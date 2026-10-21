@@ -1,35 +1,35 @@
-# NEON VAULT v5.9 — The Premier Experience
+# NEON VAULT v6.0 — The Online Era
 
 **[Play NEON VAULT](https://dokeefe414.github.io/Neon-Vault/)** · Created by Daniel O'Keefe
 
-NEON VAULT is a responsive, installable, offline-capable browser casino **simulation using fictional credits only**. No real-money wagering, deposits, purchases, cash prizes, or credits of monetary value.
+NEON VAULT is a browser-based casino **simulation using fictional, nonredeemable credits only**. No real money, payments, gambling prizes, or withdrawals.
 
-## What's new through v5.9
+## New in v6.0
 
-- v5.8 fixes Jacks-or-Better payout and Blackjack settlement recovery.
-- v5.9 adds permanent cosmetic Prestige rewards, once-daily optional style tokens, new challenges and advanced analytics.
+Two modes are intentionally separated:
 
-## Earlier releases
+- **Guest / Local Vault:** All seven existing games, achievements, Trivia Rescue questions, history, and guest progress continue working offline in your browser. Previous saves remain intact.
+- **Online Vault:** A Python FastAPI + SQLAlchemy API, PostgreSQL in production, Argon2id password hashing, hashed and revocable bearer sessions, cloud profile customization, separate server-controlled virtual wallet, recorded results, protected replay/round recovery, an online XP leaderboard, and claimable server-verified cosmetic rewards. **Requires a separately deployed cloud API.** GitHub Pages alone cannot run Python or host a database.
 
-- **v5.4:** Blackjack dealing/settlement polish and direct side-bet payout audits.
-- **v5.5:** Game records and optional Blackjack decision replays with stored hands; filters and saved session details.
-- **v5.6:** Two fully playable new virtual-credit games: eight-deck Punto Banco Baccarat and five-card Jacks or Better Video Poker.
-- **v5.7:** More avatars, unlockable cosmetic felt and card backs, badges, and new progression achievements.
-- Virtual casino experience is strictly fictional-credit-only; no purchases, financial wagering or real prizes.
+Cloud game outcomes are created **only** by the server using OS-backed random generation. The UI cannot specify winning numbers, dice values, dealt cards, correct Trivia answers, or its cloud balance. Per-user transaction locks and unique request keys prevent duplicate settlements. Guest balances, XP, and local exports are never accepted as online currency or rankings.
 
-## Earlier additions
+### Cloud games
 
-- Refined Blackjack table with staged card CSS, dealer/player separation, active-hand highlights, payout chips, betting tray, inline educational strategy hints and a standalone strategy trainer.
-- Animated European Roulette wheel with an aligned result pocket, number betting board, outside bets and clarified win/loss summaries.
-- Five-reel Slots animation with staggered stops, improved payline highlights, summarized results, wilds, scatters and free spins.
-- Player name/avatar, cosmetic card backs/table felts/profile badges, and optional XP/style-token rewards.
-- Major Trivia Rescue expansion: at least 100 distinct questions in every specialist category, difficulty balancing, randomized answer order, and no-repeat cycling with unseen progress.
-- Optional weekly challenges, detailed analytics, accessible tutorial, sound volume and reduced-motion settings.
-- Save export/import, v5 migration compatibility, session tracking, PWA/offline support, and Blackjack reload recovery.
+| Game | Server-controlled gameplay |
+| --- | --- |
+| Dice | High/low, two server-rolled dice |
+| Roulette | Single-zero wheel, numbers, colors, odd/even, columns, dozens |
+| Slots | 3×5 symbol grid, seven paylines, server-owned free-spin credits |
+| Baccarat | Eight-deck Punto Banco and banker commission |
+| Video Poker | One-deck Jacks or Better, reserve on Deal, hold/draw, idempotent settlement |
+| Blackjack | Six-deck play, dealer hole-card secrecy, hit, stand, double, split, surrender, insurance |
+| Trivia Rescue | All specialist categories exported from the original 100+ questions/category bank, with server-verified answers and cashouts |
 
-## Development
+The cloud-specific rules are explicitly documented. Online Poker reserves its wager at Deal; **forfeiting or abandoning a dealt hand loses that wager**. Unlike guest mode, the cloud release does not offer Blackjack side bets yet. Guest and cloud XP systems are independent. Server-side replays and session records show completed cloud rounds; local replays are unchanged.
 
-Node.js 20+:
+## Run the frontend locally
+
+Node.js 22+:
 
 ```bash
 npm install
@@ -38,42 +38,47 @@ npm run lint
 npm test
 npx playwright install chromium
 npm run test:e2e
+python -m http.server 4173
 ```
 
-Serve with `python3 -m http.server 4173` and open http://localhost:4173 for local browser development.
+Open http://localhost:4173. Guest play requires no backend.
 
-## Structure
+## Run the Python API locally
 
-- `src/core/store.js`: virtual wallet accounting, migration, and persistence
-- `src/core/random.js`: cryptographic RNG and injectable test source
-- `src/core/rules.js`: pure Roulette and Slots rules
-- `src/core/baccarat.js` and `src/core/poker.js`: independently testable Baccarat and Video Poker payout/drawing engines
-- `src/core/strategy.js`: six-deck Blackjack basic strategy advisor
-- `src/core/simulation.js`: seeded deterministic simulations for QA
-- `src/data/trivia-*.js`: category expansions and validated four-choice question factory
-- `src/games/trivia-selection.js`: saved per-category no-repeat cycles and question selection
-- `src/games/`: standalone game controllers
-- `src/ui/views.js`, `src/ui/v5.js`, `src/ui/records.js`: screens, tutorials, analytics, saved game replays, player cosmetics
-- `src/progression/`: achievements, daily and weekly challenges, session analytics
-- `v5.css`, `v57.css`: additional visual system, animations, and cosmetics
-- `tests/`: smoke, rule, simulation, and Playwright tests
+Python 3.12+:
 
-## Stability and save protections
+```bash
+python -m venv .venv
+# Activate the environment for your operating system
+pip install -r server/requirements-dev.txt
+node scripts/export-trivia.mjs
+uvicorn app.main:app --app-dir server --reload --port 8000
+```
 
-v5.1 commits completed Dice, Roulette and Slots bets as single durable wallet updates, prevents duplicate settlement when a unique ID is supplied, and warns if a second tab changes the same local wallet or profile. This is optimistic conflict detection, not a substitute for an atomic server-side transaction. Blackjack's in-progress wager and additional side bets remain a distinct persisted-hand workflow.
+Use the **Online Vault** navigation link and connect to `http://localhost:8000`. For the Python integration tests:
 
-## Data / integrity
+```bash
+pytest -q server/tests
+```
 
-All virtual values are stored in integer cents and saved locally. Existing storage keys (`neon-vault-save-v1` and `neon-vault-meta-v2`) are retained across schema upgrades. Browser-local balances can be edited by players and are **not suitable for global leaderboards**. Authenticated cloud profiles and public rankings would require a server that owns transactions, generates/verifies game results, and stores an auditable leaderboard. No backend service or cloud-sync account is configured in v5.
+For Docker/PostgreSQL and an internet-facing API, read **[V6-DEPLOYMENT.md](V6-DEPLOYMENT.md)**.
 
-Game payout logic is independent of animations. Production random outcomes use Web Crypto; seeded test simulations do not affect live gameplay. Strategy tips and simulations are educational and cannot guarantee wins.
+## Repo structure
 
-### v5.6 Baccarat and Video Poker notes
+- `src/` — vanilla JavaScript, HTML, CSS guest casino and cloud portal
+- `src/ui/cloud.js`, `cloud.css` — Online Vault interface; API URL explicitly configurable
+- `server/app/main.py` — versioned REST API, account lifecycle, profiles, rewards, leaderboard
+- `server/app/security.py` — password verification and revocable sessions
+- `server/app/db.py` — server-owned users, round records, idempotency keys and ledger
+- `server/app/logic.py` — seven virtual-credit rule engines
+- `server/app/services.py` — server-authoritative wagering and poker/Blackjack state machines
+- `server/app/trivia.py` — online Trivia streaks and no-repeat question selection
+- `scripts/export-trivia.mjs` — build-time export of validated Trivia questions for server-only answer checking
+- `server/tests/` — security, settlement, accounting, random game, and API tests
+- `.github/workflows/quality.yml` — JS, backend and desktop/mobile browser CI
 
-Baccarat uses an eight-deck shuffled shoe and a pure rules module: Player and Banker naturals stand, Player draws on 0–5, and Banker follows the standard third-card table. Banker wins return stake plus 95% of the wager; Player returns twice the wager; Tie returns nine times the wager. Player/Banker bets push when the hand ties. Video Poker uses a fresh shuffled deck each hand and Jacks-or-Better paytable, with a 1-for-1 high-pair return, 9-for-1 full house and 800-for-1 royal flush. These rates are explicit virtual-credit paytable rules, not casino advice.
+## Privacy & security model
 
-Video Poker holds an **unpaid draft** after Deal: abandoning, refreshing, or canceling before Draw does not charge credits. The wager is committed on Draw alongside the result. Blackjack hands retain their separately persisted wager/reload recovery path.
+Credentials never go into local guest saves, the offline cache, or a GitHub repository. Cloud tokens are kept in **sessionStorage** (one browser tab session), never in persistent localStorage. The API origin you choose is stored locally; **only enter a trusted HTTPS API origin**, except localhost for development. Password reset/email verification are not yet configured; see deployment guide for production requirements. The backend rejects unknown input fields and any attempt to set credits, XP, or leaderboard ranks via profile updates.
 
-### History/replays
-
-New settled rounds store additional metadata including cards, selected bets, and results so that the Records screen can reconstruct decisions. Prior versions' records are shown as summaries where replay metadata is unavailable. Replays are historical displays and never call the game RNG or change balances.
+The project is not suitable for real-money use and is not intended to support it. Browser-only testing and CI do not make an internet-facing service production-ready without HTTPS, controlled backups, secret management, abuse protections, legal/privacy review, and operational monitoring.

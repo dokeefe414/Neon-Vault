@@ -15,33 +15,36 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
-      - name: Install dependencies
+      - name: Install front-end dependencies
         run: npm install
-
       - name: Check JavaScript syntax
         run: npm run check
-
       - name: Run ESLint
         run: npm run lint
-
       - name: Run smoke and deterministic rule tests
         run: npm test
-
-      - name: Audit dependencies
+      - name: Generate full server-authoritative Trivia bank
+        run: node scripts/export-trivia.mjs
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install server dependencies
+        run: pip install -r server/requirements-dev.txt
+      - name: Check Python syntax
+        run: python -m compileall -q server/app server/tests
+      - name: Run backend security, games and database tests
+        run: pytest -q server/tests
+      - name: Audit Node dependencies
         run: npm audit --audit-level=high
-
       - name: Install Chromium for Playwright
         run: npx playwright install --with-deps chromium
-
       - name: Run Playwright browser tests
         run: npm run test:e2e
-
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4

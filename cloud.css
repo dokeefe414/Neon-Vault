@@ -1,0 +1,54 @@
+/* v6.0 Online Vault: completely separate server-authoritative player space */
+.cloud-page{max-width:1200px;margin:0 auto}
+.cloud-topline{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0 14px}
+.cloud-live{font-size:10px;letter-spacing:1.6px;font-weight:900;color:var(--mint)}
+.cloud-page>h2{font-size:clamp(28px,3.5vw,42px);letter-spacing:-1px}
+.cloud-page>p{line-height:1.7;margin-bottom:20px}
+.cloud-alert{border:1px solid #f19c6f;padding:13px 16px;border-radius:13px;background:color-mix(in srgb,#ef794d 12%,var(--nv-panel2));margin:15px 0;color:#ffc8ac;line-height:1.6}
+.cloud-alert[hidden]{display:none}
+.cloud-setup{max-width:710px;padding:26px}
+.cloud-setup h3{font-size:24px}
+.cloud-form{display:flex;flex-direction:column;gap:14px;align-items:flex-start;max-width:580px;margin:18px 0}
+.cloud-form label{display:flex;flex-direction:column;gap:7px;font-weight:750;color:var(--text);width:100%}
+.cloud-form input,.cloud-form select,.cloud-game-panel input,.cloud-game-panel select{
+ width:100%;min-height:46px;box-sizing:border-box;padding:10px 14px;
+ border:1px solid var(--nv-border-strong);border-radius:12px;background:var(--nv-panel3);color:var(--text)
+}
+.cloud-form input:focus-visible,.cloud-form select:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
+.cloud-form button,.cloud-setup button{min-height:45px}
+.cloud-auth-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.cloud-auth-grid .pro-panel{padding:22px}
+.cloud-auth-grid h3{margin-top:12px;font-size:22px}
+.cloud-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.cloud-stats .pro-panel{padding:18px;min-height:98px}
+.cloud-total{font:850 clamp(22px,3vw,32px) Outfit,sans-serif;color:var(--mint);letter-spacing:-.035em}
+.cloud-tabs{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:17px;border-bottom:1px solid var(--nv-border);margin-bottom:20px}
+.cloud-tabs button,.cloud-game-tabs button{min-height:44px;padding:9px 15px;border-radius:11px;background:var(--nv-panel2);border:1px solid var(--nv-border-strong);color:var(--text);font-weight:750;cursor:pointer}
+.cloud-tabs button.active,.cloud-game-tabs button.active{border-color:var(--mint);background:color-mix(in srgb,var(--mint) 14%,var(--nv-panel2));color:var(--mint)}
+.cloud-tabs button:focus-visible,.cloud-game-tabs button:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
+.cloud-tabs #cloudSignout{margin-left:auto;border-color:color-mix(in srgb,var(--red) 35%,var(--nv-border));color:var(--muted)}
+.cloud-game-tabs{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:19px}
+.cloud-game-panel{padding:24px;overflow:hidden}
+.cloud-game-panel h3{font-size:24px;margin-top:0}
+.cloud-game-panel .cloud-form{display:flex;flex-direction:row;flex-wrap:wrap;align-items:end;max-width:none}
+.cloud-game-panel .cloud-form label{width:auto;min-width:132px;flex:1}
+.cloud-game-panel .cloud-form button{min-height:46px}
+.cloud-game-panel .felt{margin:18px auto}
+.cloud-game-panel #cloudResult{margin-top:19px;min-height:20px}
+.cloud-json{white-space:pre-wrap;word-break:break-word;font-size:12px;line-height:1.6;padding:14px;margin:12px 0;border-radius:12px;background:var(--nv-bg-deep);border:1px solid var(--nv-border);max-height:360px;overflow:auto;color:var(--text)}
+.cloud-card-row{display:flex;flex-wrap:wrap;align-items:center;gap:9px;min-height:65px;margin:10px 0}
+.cloud-hand{padding:12px;border:1px solid color-mix(in srgb,var(--mint) 15%,var(--nv-border));border-radius:14px}
+.cloud-hand.active{border-color:var(--gold);box-shadow:0 0 25px color-mix(in srgb,var(--gold) 12%,transparent)}
+.cloud-actions .controls{margin:14px 0}
+.cloud-actions button{min-height:46px}
+.cloud-bj-table{padding:20px}
+.cloud-answer-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:20px 0}
+.cloud-answer-grid button{min-height:58px;text-align:left;white-space:normal}
+.linklike{border:0;background:none;padding:3px;color:var(--mint);text-decoration:underline;cursor:pointer}
+.cloud-page [hidden]{display:none!important}
+@media(max-width:740px){.cloud-auth-grid{grid-template-columns:1fr}.cloud-game-panel{padding:15px}.cloud-tabs #cloudSignout{margin-left:0}.cloud-page .nv-poker-card{min-width:51px}.cloud-stats{grid-template-columns:1fr 1fr}}
+@media(max-width:570px){.cloud-page{padding-bottom:28px}.cloud-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.cloud-tabs button{padding:8px 4px;font-size:11px}.cloud-game-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.cloud-game-tabs button{font-size:11px;padding:7px}.cloud-stats .pro-panel{padding:12px;min-height:87px}.cloud-total{font-size:21px}.cloud-game-panel .cloud-form{flex-direction:column;align-items:stretch}.cloud-game-panel .cloud-form label{width:100%}.cloud-card-row{gap:5px}.cloud-card-row .playing-card{min-width:46px}.cloud-answer-grid{grid-template-columns:1fr}.cloud-answer-grid button{min-height:52px}.cloud-page .pro-panel{max-width:100%;box-sizing:border-box}.cloud-setup{padding:15px}}
+@media(prefers-reduced-motion:reduce){.cloud-page *, .cloud-page *:before{animation:none!important;transition:none!important}}
+
+/* Six-button dock: Online Vault plus five original guest navigation tabs. */
+@media(max-width:570px){.shell>.mobile-dock{grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;padding:6px;margin-left:6px;margin-right:6px}.mobile-dock .dock-nav{min-width:0;padding:5px 0}.mobile-dock .dock-nav span{font-size:18px}.mobile-dock .dock-nav small{font-size:8px;letter-spacing:0}}

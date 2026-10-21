@@ -14,16 +14,25 @@ self.addEventListener('activate',event=>{
   event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));
 });
 
+// Only cache known same-origin static files and navigation fallbacks.
+// Never intercept authenticated API traffic, third-party resources, or private responses.
+const STATIC_ASSETS=new Set(CORE.map(path=>new URL(path,self.registration.scope).href));
 self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET')return;
+  const requested=new URL(event.request.url);
+  if(requested.origin!==self.location.origin)return;
+  const isNavigation=event.request.mode==='navigate';
+  if(!isNavigation&&!STATIC_ASSETS.has(requested.href))return;
   event.respondWith(fetch(event.request).then(response=>{
-    const copy=response.clone();
-    caches.open(CACHE).then(cache=>cache.put(event.request,copy));
+    if(response.ok&&response.type==='basic'&&!response.headers.get('Cache-Control')?.includes('no-store')){
+      const copy=response.clone();
+      event.waitUntil(caches.open(CACHE).then(cache=>cache.put(event.request,copy)));
+    }
     return response;
   }).catch(async()=>{
     const hit=await caches.match(event.request);
     if(hit)return hit;
-    if(event.request.mode==='navigate')return caches.match('./index.html');
+    if(isNavigation)return caches.match('./index.html');
     return Response.error();
   }));
 });
