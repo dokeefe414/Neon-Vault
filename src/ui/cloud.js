@@ -77,6 +77,11 @@ async function loadOnline(){
 function navigation(){
  shell();
  $('cloudBody').innerHTML=`<div class="cloud-stats"><div class="pro-panel"><div class="pro-kicker">ONLINE WALLET</div><strong class="cloud-total">${format(account.balance)}</strong><p class="hint">Fictional credits, controlled by the server</p></div><div class="pro-panel"><div class="pro-kicker">VERIFIED XP</div><strong class="cloud-total">${account.xp}</strong><p class="hint">${account.style_tokens} cosmetic tokens · ${esc(account.username)}</p></div></div><div class="cloud-tabs" role="navigation" aria-label="Online Vault"><button data-cloud-tab="lobby">Games</button><button data-cloud-tab="records">Records</button><button data-cloud-tab="leaderboard">Leaderboard</button><button data-cloud-tab="rewards">Rewards</button><button data-cloud-tab="profile">Profile</button><button id="cloudSignout">Sign out</button></div><div id="cloudPanel"></div>`;
+ // A fresh cloud screen replaces tall forms with shorter content. Reset the
+ // independently scrolling mobile main pane so game controls cannot land under
+ // the six-button bottom dock after registration, login or tab switches.
+ const main=document.getElementById('mainContent');
+ if(main)main.scrollTop=0;
  document.querySelectorAll('[data-cloud-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.cloudTab===tab);b.onclick=()=>{tab=b.dataset.cloudTab;dashboard();};});
  $('cloudSignout').onclick=safeTask(async()=>{await api('/auth/logout',{});token='';account=null;rounds={};sessionStorage.removeItem(TOKEN_KEY);authUI();});
 }
