@@ -53,7 +53,7 @@ def test_dice_and_idempotent_single_credit(client):
     assert second.status_code==200 and second.json()==one
     assert wallet(client,h)==one["balance"]
     assert client.post("/api/v1/games/play",json={**payload,"bet":1000},headers=h).status_code==409
-    assert client.post("/api/v1/games/play",json={"key":key(),"game":"dice","bet":700,"selection":"high"},headers=h).status_code==422
+    assert client.post("/api/v1/games/play",json={"key":key(),"game":"dice","bet":750,"selection":"high"},headers=h).status_code==422
     assert len(client.get("/api/v1/history",headers=h).json()["rounds"])==1
 
 def test_roulette_validation_and_other_games(client):
