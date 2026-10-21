@@ -1,8 +1,8 @@
-const CACHE='neon-vault-v5.9';
+const CACHE='neon-vault-v6.0';
 const CORE=[
-  './','./index.html','./style.css','./creator.css','./pro.css','./game-polish.css','./mobile.css','./v5.css','./v57.css','./icon.svg','./manifest.webmanifest',
+  './','./index.html','./style.css','./creator.css','./pro.css','./game-polish.css','./mobile.css','./v5.css','./v57.css','./cloud.css','./icon.svg','./manifest.webmanifest',
   './src/app.js','./src/core/utils.js','./src/core/random.js','./src/core/store.js','./src/core/rules.js','./src/core/baccarat.js','./src/core/poker.js','./src/core/strategy.js','./src/core/simulation.js',
-  './src/ui/common.js','./src/ui/views.js','./src/ui/v5.js','./src/ui/records.js','./src/ui/rewards-views.js','./src/progression/progression.js','./src/progression/session.js','./src/progression/weekly.js','./src/progression/rewards.js',
+  './src/ui/common.js','./src/ui/views.js','./src/ui/v5.js','./src/ui/records.js','./src/ui/cloud.js','./src/ui/rewards-views.js','./src/progression/progression.js','./src/progression/session.js','./src/progression/weekly.js','./src/progression/rewards.js',
   './src/data/trivia.js','./src/data/trivia-factory.js','./src/data/trivia-geography.js','./src/data/trivia-science.js','./src/data/trivia-sports.js','./src/data/trivia-math.js','./src/data/trivia-history.js','./src/data/trivia-technology.js','./src/games/trivia-selection.js','./src/games/blackjack.js','./src/games/roulette.js','./src/games/slots.js','./src/games/dice.js','./src/games/baccarat.js','./src/games/poker.js','./src/games/trivia.js'
 ];
 
