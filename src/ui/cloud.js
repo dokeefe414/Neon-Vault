@@ -92,7 +92,6 @@ async function dashboard(){
 }
 let game='dice',selection='high',bet=5,hold=[false,false,false,false,false],category='General';
 function updateAccount(result){if(result&&Number.isSafeInteger(result.balance)){account.balance=result.balance;account.xp=result.xp;account.style_tokens=result.style_tokens;}}
-function afterResult(result){updateAccount(result);dashboard();}
 const cardHtml=c=>`<span class="playing-card ${'♥♦'.includes(c.s)?'red':''}">${esc(c.r)}${esc(c.s)}</span>`;
 function cardStrip(cards){return `<div class="hand cloud-card-row">${(cards||[]).map(cardHtml).join('')}</div>`;}
 function gamesUI(){
