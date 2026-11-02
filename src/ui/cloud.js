@@ -2,7 +2,7 @@ import {$,escapeHtml,money} from '../core/utils.js';
 const CONFIG_KEY='neon-vault-cloud-origin-v6', TOKEN_KEY='neon-vault-cloud-token-v6';
 const getOrigin=()=>localStorage.getItem(CONFIG_KEY)||'';
 let base=getOrigin(),token=sessionStorage.getItem(TOKEN_KEY)||'',account=null,tab='lobby',catalog=null;
-let rounds={},requesting=false;
+let rounds={},requesting=false,leaveCloud=()=>{};
 const esc=v=>escapeHtml(String(v??''));
 const format=n=>money(Number(n)||0);
 const newKey=()=>crypto.randomUUID();
@@ -37,7 +37,8 @@ async function api(path,body,method='POST'){
 const notice=msg=>{const el=$('cloudNotice');if(el){el.textContent=msg;el.hidden=false;}};
 const safeTask=fn=>async()=>{if(requesting)return;requesting=true;try{await fn();}catch(error){notice(error.message||'Cloud request failed.');}finally{requesting=false;}};
 function shell(){
- $('content').innerHTML=`<section class="cloud-page v5-page"><div class="cloud-topline"><span class="pill">ONLINE VAULT · v6.0</span><span class="cloud-live">${account?'ACCOUNT MODE · VERIFIED RESULTS':'GUEST PLAY REMAINS AVAILABLE'}</span></div><h2>NEON VAULT Online</h2><p class="hint">Server-controlled fictional credits, verified results, and accounts. No purchases, withdrawals, or prizes. Local guest saves and online wallets are deliberately separate.</p><div id="cloudNotice" class="cloud-alert" role="alert" hidden></div><div id="cloudBody"></div></section>`;
+ $('content').innerHTML=`<section class="cloud-page v5-page"><div class="cloud-topline"><span class="pill">ONLINE VAULT · v6.0</span><span class="cloud-live">${account?'ACCOUNT MODE · VERIFIED RESULTS':'GUEST PLAY REMAINS AVAILABLE'}</span><button type="button" class="cloud-guest-return" id="returnGuestVault">← GUEST VAULT</button></div><h2>NEON VAULT Online</h2><p class="hint">Server-controlled fictional credits, verified results, and accounts. No purchases, withdrawals, or prizes. Local guest saves and online wallets are deliberately separate.</p><div id="cloudNotice" class="cloud-alert" role="alert" hidden></div><div id="cloudBody"></div></section>`;
+ $('returnGuestVault').onclick=()=>leaveCloud('home');
 }
 function configUI(){
  shell();
@@ -239,7 +240,8 @@ function profileUI(){
   profileUI();notice('Cloud profile saved.');
  })();};
 }
-export async function renderCloud(){
+export async function renderCloud(navigate){
+ leaveCloud=navigate;
  if(!base){configUI();return;}
  if(!token){authUI();return;}
  await loadOnline();

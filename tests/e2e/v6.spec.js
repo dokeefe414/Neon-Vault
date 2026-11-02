@@ -9,6 +9,7 @@ test('Online Vault opens as a separate account-mode without touching guest walle
  else await page.locator('.dock-nav[data-view="cloud"]:visible').click();
  await expect(page.locator('#pageTitle')).toHaveText('Online Vault');
  await expect(page.locator('.cloud-setup')).toBeVisible();
+ await expect(page.locator('#returnGuestVault')).toBeVisible();
  await expect(page.locator('#balance')).toHaveText(balance);
  await expect(page.locator('#cloudOrigin')).toHaveAttribute('type','url');
  await expect(page.locator('#content')).toContainText(/guest/i);

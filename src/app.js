@@ -90,7 +90,7 @@ function renderCurrent(){
     if(view==='progress')return renderProgressHub();
     if(view==='history')return renderActivity();
     if(view==='records')return renderRecords();
-    if(view==='cloud')return renderCloud();
+    if(view==='cloud')return renderCloud(navigate);
     if(view==='rewards')return renderPrestige(navigate);
     if(view==='insights')return renderDetailedInsights();
     if(view==='profile'){renderProfile();appendSessionCard();enhanceV5View(view,navigate);return;}

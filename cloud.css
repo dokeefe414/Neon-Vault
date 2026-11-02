@@ -52,3 +52,7 @@
 
 /* Six-button dock: Online Vault plus five original guest navigation tabs. */
 @media(max-width:570px){.shell>.mobile-dock{grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;padding:6px;margin-left:6px;margin-right:6px}.mobile-dock .dock-nav{min-width:0;padding:5px 0}.mobile-dock .dock-nav span{font-size:18px}.mobile-dock .dock-nav small{font-size:8px;letter-spacing:0}}
+
+.cloud-guest-return{min-height:44px;padding:9px 14px;border:1px solid var(--nv-border-strong);background:var(--nv-panel2);border-radius:12px;color:var(--text);font-size:11px;font-weight:850;cursor:pointer}
+.cloud-guest-return:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
+@media(max-width:570px){body:has(.cloud-page) .shell{grid-template-rows:minmax(0,1fr)}body:has(.cloud-page) .shell>.mobile-dock{display:none!important}body:has(.cloud-page) #content{padding-bottom:44px}body:has(.cloud-page) main{padding-bottom:16px!important}body:has(.cloud-page) .cloud-page{padding-bottom:52px}.cloud-guest-return{width:100%;font-size:12px}}
