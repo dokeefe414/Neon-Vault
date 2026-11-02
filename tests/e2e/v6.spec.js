@@ -21,6 +21,8 @@ test('Offline guest casino remains accessible from Online Vault without configur
  const nav=page.locator('.nav[data-view="cloud"]:visible');
  if(await nav.count())await nav.click();
  else await page.locator('.dock-nav[data-view="cloud"]:visible').click();
+ await page.locator('#returnGuestVault').click();
+ await expect(page.locator('#pageTitle')).toHaveText('The Vault');
  const guest=page.locator('.nav[data-view="dice"]:visible');
  if(await guest.count())await guest.click();
  else{
